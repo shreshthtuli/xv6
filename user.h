@@ -28,6 +28,7 @@ int print_count(void);
 int toggle(void);
 int add(int, int);
 int ps(void);
+int dps(void); // Extra
 
 // ulib.c
 int stat(const char*, struct stat*);

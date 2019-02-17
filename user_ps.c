@@ -15,6 +15,11 @@ main ( int argc , char * argv [])
     // If you follow the naming convention , the system call
     // name will be sys_ps and you
     // call it by calling the function ps ();
-    ps();
+    if(argc == 1){
+        ps();
+    }
+    else{
+        dps();
+    }
     exit () ;
 }

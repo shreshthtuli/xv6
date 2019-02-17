@@ -25,3 +25,4 @@
 #define SYS_toggle 24
 #define SYS_add    25
 #define SYS_ps     26
+#define SYS_dps    27

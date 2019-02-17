@@ -533,9 +533,9 @@ procdump(void)
   }
 }
 
-// List all running processes
+// MOD-1 : List all running processes with details
 void
-process_status(void)
+process_status_detailed(void)
 {
   struct proc *p;
 
@@ -552,3 +552,22 @@ process_status(void)
   }
   release(&ptable.lock);
 }
+
+
+// MOD-1 : List all running processes (only pid and name)
+void
+process_status(void)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->state != UNUSED) {
+      cprintf("pid:%d name:%s\n", p->pid, p->name);
+    }
+  }
+  release(&ptable.lock);
+}
+

@@ -132,3 +132,12 @@ sys_ps(void)
   process_status();
   return 0;
 }
+
+// MOD-1 : System call to show running processes (detailed) Extra
+void process_status_detailed(void);
+int
+sys_dps(void)
+{
+  process_status_detailed();
+  return 0;
+}
