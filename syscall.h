@@ -20,5 +20,7 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+// MOD-1 : Additional syscalls
 #define SYS_print_count 23
 #define SYS_toggle 24
+#define SYS_add 25

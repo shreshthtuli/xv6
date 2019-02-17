@@ -26,6 +26,7 @@ int uptime(void);
 // MOD-1
 int print_count(void);
 int toggle(void);
+int add(int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

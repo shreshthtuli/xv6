@@ -114,3 +114,12 @@ sys_toggle(void)
   }
   return 0;
 }
+
+// MOD-1 : Syscall to add two numbera
+int
+sys_add(int a, int b)
+{
+  argint(0, &a);
+  argint(1, &b);
+  return a+b;
+}
