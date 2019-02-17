@@ -170,11 +170,9 @@ sys_send(int sender_pid, int rec_pid, void *msg)
 // MOD-1 : System call to receive message
 int sys_recv(void *msg)
 {
-  cprintf("Start");
   argptr(0, (char**)&msg, message_size);
   int me = myproc()->pid;
   acquire(&lock);
-  
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == me){
       for(int j = 0; j < message_size; j++){
@@ -182,11 +180,9 @@ int sys_recv(void *msg)
       }
       to_pids[i] = -1;
       release(&lock);
-      cprintf("Stop");
       return 0;
     }    
   }
   release(&lock);
-  cprintf("Stop");
   return -1;
 }
