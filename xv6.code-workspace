@@ -1,0 +1,25 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+			"_*": true,
+			"*.d": true,
+			"*.o": true,
+			"*.sym": true,
+			"*.asm": true,
+            "*.out": true,
+            "vectors.S": true,
+            "bootblock": true,
+            "entryother": true,
+            "initcode": true,
+            "initcode.out": true,
+            "kernel": true,
+            "kernelmemfs": true,
+            "mkfs": true
+        }
+    }
+}

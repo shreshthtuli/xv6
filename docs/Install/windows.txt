@@ -15,3 +15,6 @@ Step 3: disable video device for qemu in Makefile
 Step 4: type linux like commands in that terminal i.e
 - make
 - make qemu
+
+
+To exit xv6, Ctrl + A, then x
