@@ -20,6 +20,9 @@
             "kernel": true,
             "kernelmemfs": true,
             "mkfs": true
+        },
+        "files.associations": {
+            "syscall_trace.h": "c"
         }
     }
 }

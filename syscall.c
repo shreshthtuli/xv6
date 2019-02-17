@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "x86.h"
 #include "syscall.h"
+#include "syscall_trace.h"
 
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
@@ -137,6 +138,12 @@ syscall(void)
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->tf->eax = syscalls[num]();
+    // MOD-1 : Increment syscall counts if trace is on
+    if(trace){
+      syscallcounts[num] = syscallcounts[num] + 1;
+    }
+    // MOD-1 : Print syscall
+    cprintf("%s %d\n", syscallnames[num], syscallcounts[num]);
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);
