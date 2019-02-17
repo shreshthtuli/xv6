@@ -7,6 +7,9 @@
 #include "mmu.h"
 #include "proc.h"
 #include "syscall_trace.h"
+#include "sysproc_ipc.h"
+#include "spinlock.h"
+
 
 int
 sys_fork(void)
@@ -140,4 +143,50 @@ sys_dps(void)
 {
   process_status_detailed();
   return 0;
+}
+
+// MOD-1 : System call to send message of 8 bytes
+struct spinlock lock;
+int
+sys_send(int sender_pid, int rec_pid, void *msg)
+{
+  argint(0, &sender_pid);
+  argint(1, &rec_pid);
+  argptr(2, (char**)&msg, message_size);
+  acquire(&lock);
+  for(int i = 0; i < num_message_buffers; i++){
+    if(!to_pids[i] || to_pids[i] == -1){
+      memmove(buffers[i], msg, 8);
+      from_pids[i] = sender_pid;
+      to_pids[i] = rec_pid;
+      release(&lock);
+      return 0;
+    }    
+  }
+  release(&lock);
+  return -1;
+}
+
+// MOD-1 : System call to receive message
+int sys_recv(void *msg)
+{
+  cprintf("Start");
+  argptr(0, (char**)&msg, message_size);
+  int me = myproc()->pid;
+  acquire(&lock);
+  
+  for(int i = 0; i < num_message_buffers; i++){
+    if(to_pids[i] == me){
+      for(int j = 0; j < message_size; j++){
+        *((char*)msg+j) = *(buffers[i]+j);
+      }
+      to_pids[i] = -1;
+      release(&lock);
+      cprintf("Stop");
+      return 0;
+    }    
+  }
+  release(&lock);
+  cprintf("Stop");
+  return -1;
 }

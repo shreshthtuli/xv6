@@ -110,6 +110,8 @@ extern int sys_toggle(void);
 extern int sys_add(void);
 extern int sys_ps(void);
 extern int sys_dps(void);
+extern int sys_send(void);
+extern int sys_recv(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -139,6 +141,8 @@ static int (*syscalls[])(void) = {
 [SYS_add]     sys_add,
 [SYS_ps]      sys_ps,
 [SYS_dps]     sys_dps,
+[SYS_send]    sys_send,
+[SYS_recv]    sys_recv,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -171,6 +175,8 @@ char* syscallnames[] = {
     "sys_add",
     "sys_ps",
     "ssys_dps",
+    "sys_send",
+    "sys_recv",
 };
 
 int num_sys_calls = NELEM(syscallnames);
