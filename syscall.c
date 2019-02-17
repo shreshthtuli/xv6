@@ -104,6 +104,8 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_print_count(void);
+extern int sys_toggle(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,7 +129,42 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_print_count] sys_print_count,
+[SYS_toggle]  sys_toggle
 };
+
+// MOD-1 : Definitions of external variables here
+int trace = 0;
+
+char* syscallnames[] = {
+    "sys_fork",
+    "sys_exit",
+    "sys_wait",
+    "sys_pipe",
+    "sys_read",
+    "sys_kill",
+    "sys_exec",
+    "sys_fstat",
+    "sys_chdir",
+    "sys_dup",
+    "sys_getpid",
+    "sys_sbrk",
+    "sys_sleep",
+    "sys_uptime",
+    "sys_open",
+    "sys_write",
+    "sys_mknod",
+    "sys_unlink",
+    "sys_link",
+    "sys_mkdir",
+    "sys_close",
+    "sys_print_count",
+    "sys_toggle"
+};
+
+int num_sys_calls = NELEM(syscallnames);
+
+int* syscallcounts[NELEM(syscalls)] = { 0 };
 
 void
 syscall(void)
@@ -137,13 +174,14 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    curproc->tf->eax = syscalls[num]();
     // MOD-1 : Increment syscall counts if trace is on
-    if(trace){
+    if(trace == 1){
       syscallcounts[num] = syscallcounts[num] + 1;
     }
     // MOD-1 : Print syscall
-    cprintf("%s %d\n", syscallnames[num], syscallcounts[num]);
+    // cprintf("%s %d\n", syscallnames[num], syscallcounts[num]);
+
+    curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);

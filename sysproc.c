@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "syscall_trace.h"
 
 int
 sys_fork(void)
@@ -88,4 +89,28 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// MOD-1 : Added syscall printing with counts
+int
+sys_print_count(void)
+{
+  for(uint i = 0; i < num_sys_calls; i++){
+    cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
+  }
+  return 0;
+}
+
+// MOD-1 : Toggle the tracer on or off
+int
+sys_toggle(void)
+{
+  trace = 1 - trace;
+  // MOD-1 : Reset all counts
+  if(trace == 1){
+    for(uint i = 0; i < num_sys_calls; i++){
+      syscallcounts[i] = 0;
+    }
+  }
+  return 0;
 }
