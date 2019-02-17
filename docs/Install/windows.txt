@@ -1,0 +1,17 @@
+Use WSL (Windows sub-system for Linux) on Windows 10
+
+Step 1: enable and setup WSL following http://www.howtogeek.com/249966/how-to-install-and-use-the-linux-bash-shell-on-windows-10/
+
+Step 2: run WSL bash and install required stuffs on WSL.
+- run powershell from xv6 folder
+- type 'bash' and this will switch CMD into WSL bash
+- then sudo apt-get update && sudo apt-get install git nasm build-essential qemu gdb 
+
+Step 3: disable video device for qemu in Makefile
+- open Makefile in xv6 source directory with any text editor
+- find the line starting with 'QEMUOPTS ='
+- append '-display none' to this line and save the file.
+
+Step 4: type linux like commands in that terminal i.e
+- make
+- make qemu
