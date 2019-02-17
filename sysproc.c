@@ -123,3 +123,12 @@ sys_add(int a, int b)
   argint(1, &b);
   return a+b;
 }
+
+// MOD-1 : System call to show running processes
+void process_status(void);
+int
+sys_ps(void)
+{
+  process_status();
+  return 0;
+}

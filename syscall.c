@@ -108,6 +108,7 @@ extern int sys_uptime(void);
 extern int sys_print_count(void);
 extern int sys_toggle(void);
 extern int sys_add(void);
+extern int sys_ps(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -135,6 +136,7 @@ static int (*syscalls[])(void) = {
 [SYS_print_count] sys_print_count,
 [SYS_toggle]  sys_toggle,
 [SYS_add]     sys_add,
+[SYS_ps]      sys_ps,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -164,7 +166,8 @@ char* syscallnames[] = {
     "sys_close",
     "sys_print_count",
     "sys_toggle",
-    "sys_add"
+    "sys_add",
+    "sys_ps"
 };
 
 int num_sys_calls = NELEM(syscallnames);

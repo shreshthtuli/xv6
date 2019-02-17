@@ -532,3 +532,23 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+// List all running processes
+void
+process_status(void)
+{
+  struct proc *p;
+
+  const char* stateNames[] = {"UNUSED\0", "EMBRYO\0", "SLEEPING\0", "RUNNABLE\0", "RUNNING\0", "ZOMBIE\0" };
+
+  acquire(&ptable.lock);
+
+  cprintf("Pid\tName\t\tMemSize\tKilled\tState\n");
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->state != UNUSED) {
+      cprintf("%d\t%s\t\t%d\t%d\t%s\n", p->pid, p->name, p->sz, p->killed, stateNames[p->state]);
+    }
+  }
+  release(&ptable.lock);
+}
