@@ -600,8 +600,10 @@ sigsend(int dest_pid, char* msg)
 int
 sigset(sig_handler new_sighandler)
 {
+  cprintf("Entered sigset\n");
   struct proc *p = myproc();
   p->sig_handler = new_sighandler;
+  cprintf("Exiting sigset from pid %d\n", p->pid);
   return 0;
 }
 
@@ -617,7 +619,7 @@ sigret(void)
 void checkSignals(struct trapframe *tf)
 { 
   struct proc *p = myproc();
-  if(p == 0 || p->pid == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || (tf->cs & 3) != DPL_USER)
+  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || (tf->cs & 3) != DPL_USER)
     return; // currently handling a signal
   if (*p->msg == -1)
     return; // no pending signals
@@ -626,7 +628,8 @@ void checkSignals(struct trapframe *tf)
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   *((char*)(p->tf->esp - 4)) = *p->msg;
-  p->tf->esp -= 12;
+  *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
+  p->tf->esp -= 8;
   p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
   *p->msg = -1;
 }
