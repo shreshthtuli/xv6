@@ -100,6 +100,8 @@ exec(char *path, char **argv)
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   curproc->sig_handler = (sig_handler)-1; // MOD-1 reset signal handler
+  *curproc->msg = -1;
+  curproc->disableSignals = 0;
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

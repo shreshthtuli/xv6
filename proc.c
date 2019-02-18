@@ -112,6 +112,7 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
   p->disableSignals = 0;
+  p->sig_handler = (sig_handler)-1;
 
   return p;
 }
@@ -139,7 +140,6 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
-  *p->msg = -1; // MOD-1 : init process has no message
   p->sig_handler = (sig_handler)-1; // MOD-1 : init process has not handler
   p->disableSignals = 0; // MOD-1
 
@@ -204,7 +204,6 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
-  *np->msg = -1;        // MOD-1 : Message is -1
   np->sig_handler = curproc->sig_handler; // Signal handler of parent
 
   // Clear %eax so that fork returns 0 in the child.
