@@ -1,3 +1,7 @@
+#define message_size 8
+
+typedef void (* sig_handler) (char* msg);
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -43,12 +47,16 @@ struct proc {
   int pid;                     // Process ID
   struct proc *parent;         // Parent process
   struct trapframe *tf;        // Trap frame for current syscall
+  struct trapframe *Oldtf;     // MOD-1 : Old trap frame
   struct context *context;     // swtch() here to run process
   void *chan;                  // If non-zero, sleeping on chan
   int killed;                  // If non-zero, have been killed
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  sig_handler sig_handler;     // MOD-1 : Signal handler for process
+  char* msg;                   // MOD-1 : Signal msg
+  int disableSignals;          // MOD-1 : Disable signals when currently processing one
 };
 
 // Process memory is laid out contiguously, low addresses first:

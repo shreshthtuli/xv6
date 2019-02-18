@@ -1,3 +1,4 @@
+typedef void (* sig_handler) (char* msg);
 struct stat;
 struct rtcdate;
 
@@ -31,6 +32,9 @@ int ps(void);
 int dps(void); // Extra
 int send(int, int, void*);
 int recv(void*);
+int send_multi(int, int, void*);
+int sigset(sig_handler);
+int sigret(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

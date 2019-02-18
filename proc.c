@@ -138,6 +138,8 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+  *p->msg = -1; // MOD-1 : init process has no message
+  p->sig_handler = (sig_handler)-1; // MOD-1 : init process has not handler
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -199,6 +201,9 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+
+  *np->msg = -1;        // MOD-1 : Message is -1
+  np->sig_handler = curproc->sig_handler; // Signal handler of parent
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -570,3 +575,57 @@ process_status(void)
   release(&ptable.lock);
 }
 
+// MOD-1 : System call for send in multi-cast
+int
+sigsend(int dest_pid, char* msg)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->pid == dest_pid) {
+      memmove(p->msg, msg, message_size);
+      release(&ptable.lock);
+      return 0; // successful execution
+    }
+  }
+
+  // No such process found
+  release(&ptable.lock);
+  return -1;
+}
+
+// MOD-1 : System call for setting signal handler
+int
+sigset(sig_handler new_sighandler)
+{
+  struct proc *p = myproc();
+  p->sig_handler = new_sighandler;
+  return 0;
+}
+
+// MOD-1 : Return from trap
+void
+sigret(void)
+{
+  struct proc *p = myproc();
+  memmove(p->tf, &p->Oldtf, sizeof(struct trapframe));
+  p->disableSignals = 0; // enable handling next pending signal
+}
+
+void checkSignals(struct trapframe *tf)
+{ 
+  struct proc *p = myproc();
+  if(p->pid == 0 || p->disableSignals == 1)
+    return; // currently handling a signal
+  if (*p->msg == -1)
+    return; // no pending signals
+  p->disableSignals = 1; // Stop further signals
+  memmove(&p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
+  p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
+  memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
+  *((char*)(p->tf->esp - 4)) = *p->msg;
+  p->tf->esp -= 12;
+  p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
+  *p->msg = -1;
+}
