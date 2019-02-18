@@ -164,7 +164,7 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == -1){
-      cprintf("Enter send %s\n");
+      cprintf("Enter send\n");
       memmove(buffers[i], msg, message_size);
       from_pids[i] = sender_pid;
       to_pids[i] = rec_pid;

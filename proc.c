@@ -618,8 +618,10 @@ sigret(void)
 
 void checkSignals(struct trapframe *tf)
 { 
+  if((tf->cs & 3) != DPL_USER)
+    return;
   struct proc *p = myproc();
-  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || (tf->cs & 3) != DPL_USER)
+  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1)
     return; // currently handling a signal
   if (*p->msg == -1)
     return; // no pending signals

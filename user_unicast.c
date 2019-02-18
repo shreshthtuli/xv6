@@ -14,7 +14,7 @@ int main(void)
 		char *msg = (char *)malloc(MSGSIZE);
 		int stat=-1;
 		while(stat==-1){
-		// 	stat = recv(msg);
+			stat = recv(msg);
 		}
 		printf(1,"2 CHILD: msg recv is: %s \n", msg );
 		exit();
