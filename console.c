@@ -15,6 +15,8 @@
 #include "proc.h"
 #include "x86.h"
 
+typedef void (* sig_handler) (char* msg);
+
 static void consputc(int);
 
 static int panicked = 0;

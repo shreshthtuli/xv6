@@ -23,6 +23,9 @@ alltraps:
   # Return falls through to trapret...
 .globl trapret
 trapret:
+  pushl %esp
+  call checkSignals # MOD-1 : Check signals pending
+  addl $4, %esp
   popal
   popl %gs
   popl %fs

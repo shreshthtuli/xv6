@@ -5,6 +5,7 @@ OBJS = \
 	file.o\
 	fs.o\
 	ide.o\
+	invokesigret.o\
 	ioapic.o\
 	kalloc.o\
 	kbd.o\
@@ -186,6 +187,7 @@ UPROGS=\
 	_user_add\
 	_user_ps\
 	_user_unicast\
+	_user_multicast\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -253,7 +255,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\
+	user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c\

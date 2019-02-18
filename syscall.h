@@ -28,3 +28,6 @@
 #define SYS_dps    27
 #define SYS_send   28
 #define SYS_recv   29
+#define SYS_send_multi 30
+#define SYS_sigset 31
+#define SYS_sigret 32

@@ -7,8 +7,16 @@
 #include "mmu.h"
 #include "proc.h"
 #include "syscall_trace.h"
-#include "sysproc_ipc.h"
 #include "spinlock.h"
+
+#define num_message_buffers 20
+#define message_size 8
+
+typedef void (* sig_handler) (char* msg);
+
+char buffers[num_message_buffers][8] = { "        " };
+int from_pids[20] = { -1 };
+int to_pids[20] = { -1 };
 
 
 int
@@ -156,7 +164,7 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(!to_pids[i] || to_pids[i] == -1){
-      memmove(buffers[i], msg, 8);
+      memmove(buffers[i], msg, message_size);
       from_pids[i] = sender_pid;
       to_pids[i] = rec_pid;
       release(&lock);
@@ -168,16 +176,15 @@ sys_send(int sender_pid, int rec_pid, void *msg)
 }
 
 // MOD-1 : System call to receive message
-int sys_recv(void *msg)
+int
+sys_recv(void *msg)
 {
   argptr(0, (char**)&msg, message_size);
   int me = myproc()->pid;
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == me){
-      for(int j = 0; j < message_size; j++){
-        *((char*)msg+j) = *(buffers[i]+j);
-      }
+      memmove(msg, buffers[i], message_size);
       to_pids[i] = -1;
       release(&lock);
       return 0;
@@ -185,4 +192,47 @@ int sys_recv(void *msg)
   }
   release(&lock);
   return -1;
+}
+
+
+// MOD-1 : System call to send message in multi-cast
+int sigsend(int dest_pid, char* msg);
+int
+sys_send_multi(int sender_pid, int rec_pids[], void *msg)
+{
+  argint(0, &sender_pid);
+  argptr(1, (char**)rec_pids, sizeof(*rec_pids)/sizeof(rec_pids[0]));
+  argptr(2, (char**)&msg, message_size);
+  acquire(&lock);
+  int result = 0;
+  for(int t = 0; t < sizeof(*rec_pids)/sizeof(rec_pids[0]); t++){
+    int to = rec_pids[t];
+    result = sigsend(to, msg);
+    if(result < 0){
+      release(&lock);
+      return -1;
+    }
+  }
+  release(&lock);
+  return 0;
+}
+
+// MOD-1 : System call to set interrupt handler
+int sigset(sig_handler new_sighandler);
+int
+sys_sigset(sig_handler func)
+{
+  int sighandler;
+  argint(0, &sighandler);
+  sigset((sig_handler) sighandler);
+  return 0;
+}
+
+// MOD-1 : Syscall for returning from trap
+int sigret(void);
+int
+sys_sigret(void)
+{
+  sigret();
+  return 0;
 }
