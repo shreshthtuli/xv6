@@ -111,6 +111,7 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+  p->disableSignals = 0;
 
   return p;
 }
@@ -140,6 +141,7 @@ userinit(void)
   p->tf->eip = 0;  // beginning of initcode.S
   *p->msg = -1; // MOD-1 : init process has no message
   p->sig_handler = (sig_handler)-1; // MOD-1 : init process has not handler
+  p->disableSignals = 0; // MOD-1
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -616,7 +618,7 @@ sigret(void)
 void checkSignals(struct trapframe *tf)
 { 
   struct proc *p = myproc();
-  if(p->pid == 0 || p->disableSignals == 1)
+  if(p == 0 || p->pid == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || (tf->cs & 3) != DPL_USER)
     return; // currently handling a signal
   if (*p->msg == -1)
     return; // no pending signals
