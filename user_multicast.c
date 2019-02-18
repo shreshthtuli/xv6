@@ -15,6 +15,8 @@ int main(void)
 
 	sigset((sig_handler)&interruptHandler);
 
+	printf(1, "Signal handler set\n");
+
 	int cid = fork();
 	if(cid==0){
 		// This is child
@@ -27,6 +29,7 @@ int main(void)
 		char *msg_child = (char *)malloc(MSGSIZE);
 		msg_child = "hello!!!";
 		int arr[1] = { cid };
+		printf(1, "Sending msg\n");
 		send_multi(getpid(), *arr, msg_child);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
 		free(msg_child);

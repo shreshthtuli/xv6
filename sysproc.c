@@ -163,11 +163,13 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   argptr(2, (char**)&msg, message_size);
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
-    if(!to_pids[i] || to_pids[i] == -1){
+    if(to_pids[i] == -1){
+      cprintf("Enter send %s\n");
       memmove(buffers[i], msg, message_size);
       from_pids[i] = sender_pid;
       to_pids[i] = rec_pid;
       release(&lock);
+      cprintf("Exit send : %s\n", buffers[i]);
       return 0;
     }    
   }
@@ -225,7 +227,7 @@ sys_sigset(sig_handler func)
   int sighandler;
   argint(0, &sighandler);
   sigset((sig_handler) sighandler);
-  return 0;
+  return 1;
 }
 
 // MOD-1 : Syscall for returning from trap
