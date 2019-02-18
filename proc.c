@@ -612,12 +612,13 @@ void
 sigret(void)
 {
   struct proc *p = myproc();
-  memmove(p->tf, &p->Oldtf, sizeof(struct trapframe));
+  memmove(p->tf, p->Oldtf, sizeof(struct trapframe));
   p->disableSignals = 0; // enable handling next pending signal
 }
 
 void checkSignals(struct trapframe *tf)
 { 
+  return;
   if((tf->cs & 3) != DPL_USER)
     return;
   struct proc *p = myproc();
@@ -626,7 +627,7 @@ void checkSignals(struct trapframe *tf)
   if (*p->msg == -1)
     return; // no pending signals
   p->disableSignals = 1; // Stop further signals
-  memmove(&p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
+  memmove(p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   *((char*)(p->tf->esp - 4)) = *p->msg;
