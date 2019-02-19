@@ -17,8 +17,8 @@ typedef void (* sig_handler) (char* msg);
 typedef struct{
   struct spinlock lock;
   char buffers[num_message_buffers][8];
-  int from_pids[20];
-  int to_pids[20];
+  int from_pids[num_message_buffers];
+  int to_pids[num_message_buffers];
 } kernel_buffers;
 
 kernel_buffers kern = {
@@ -162,6 +162,9 @@ sys_dps(void)
 }
 
 // MOD-1 : System call to send message of 8 bytes
+struct spinlock lock;
+int wakeup_process(int);
+int sleep_process(int);
 int
 sys_send(int sender_pid, int rec_pid, void *msg)
 {
@@ -173,10 +176,14 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   for(int i = 0; i < num_message_buffers; i++){
     if(kern.to_pids[i] == -1){
       // cprintf("Enter send\n");
+      acquire(&lock);
       memmove(kern.buffers[i], ch, message_size);
       kern.from_pids[i] = sender_pid;
       kern.to_pids[i] = rec_pid;
       release(&kern.lock);
+      release(&lock);
+      cprintf("Waking up %d\n", rec_pid);
+      wakeup_process(rec_pid);
       // cprintf("Exit send : %s\n", buffers[i]);
       return 0;
     }    
@@ -195,16 +202,20 @@ sys_recv(void *msg)
   int i = 0;
   while(1){
     for(i = 0; i < num_message_buffers; i++){
-      if(kern.to_pids[i] == me){
+      if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
         acquire(&kern.lock);
+        acquire(&lock);
         cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
         memmove(ch, kern.buffers[i], message_size);
         kern.to_pids[i] = -1;
+        kern.buffers[i][0] = ' ';
         release(&kern.lock);
-        // cprintf("Exit recv : %s\n", buffers[i]);
+        release(&lock);
+        cprintf("Exit recv : %d\n", i);
         return 0;
       }
     }
+    sleep_process(me);
   }
   return -1;
 }
@@ -221,6 +232,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg)
   argptr(1, (char**)&pid, 64);
   argptr(2, &ch, message_size);
   acquire(&kern.lock);
+  acquire(&lock);
   int result = 0;
   for(int t = 0; t < 64; t++){
     int to = *pid;
@@ -231,10 +243,12 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg)
     pid += 1;
     if(result < 0){
       release(&kern.lock);
+      release(&lock);
       return -1;
     }
   }
   release(&kern.lock);
+  release(&lock);
   return 0;
 }
 

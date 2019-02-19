@@ -576,6 +576,37 @@ process_status(void)
   release(&ptable.lock);
 }
 
+// MOD-1 : Wakeup sleeping process
+int
+wakeup_process(int pid)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->pid == pid) {
+      p->state = RUNNABLE;
+    }
+  }
+  release(&ptable.lock);
+  return 0;
+}
+
+// MOD-1 : Sleep process
+int
+sleep_process(int pid)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->pid == pid) {
+      p->state = SLEEPING;
+    }
+  }
+  sched();
+  release(&ptable.lock);
+  return 0;
+}
+
 // MOD-1 : System call for send in multi-cast
 int
 sigsend(int dest_pid, char* msg)
@@ -631,6 +662,7 @@ void checkSignals(struct trapframe *tf)
   if (*p->msg == -1 || p->interrupt != 1)
     return; // no pending signals
   p->disableSignals = 1; // Stop further signals
+  p->interrupt = 0;
   memmove(p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);

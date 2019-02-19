@@ -1,7 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#define size 16
+#define size 8
 
 int
 main(int argc, char *argv[])
@@ -58,16 +58,16 @@ main(int argc, char *argv[])
 		// Child process
 		printf(1, "Child proc %d\n", getpid());
 		char* msg = (char *)malloc(8);
-		msg = "0000000\0";
-		int val;
+		msg = "00000000\0";
+		int val = -48;
 		int partial_sum = 0;
 		for(int i = 0; i < size/8; i++){
 			recv(msg);
 			val = msg[7] - '0';
-			printf(1, "msg %s, %d, %d\n", msg, getpid(), val);
+			printf(1, "msg %c, %s, %d, %d\n", msg[7], msg, getpid(), val);
 			partial_sum += val;
 		}
-		msg = "0000000\0";
+		msg = "00000000\0";
 		msg[7] = partial_sum%10 + '0';
 		msg[6] = (partial_sum/10)%10 + '0';
 		msg[5] = (partial_sum/100)%10 + '0';
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 		printf(1, "Parent proc %d", getpid());
 		int to;
 		char* data = (char *)malloc(8);
-		data = "0000000\0";
+		data = "00000000\0";
 		int index = 0;
 		int val;
 		// Coordinator process

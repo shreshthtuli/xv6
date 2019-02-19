@@ -25,12 +25,15 @@ int main(void)
 	if(cid2 == 0)
 		goto child;
 	int cid3 = fork();
+	if(cid3 == 0)
+		goto child;
+	int cid4 = fork();
 	child:
-	if(cid==0 || cid2==0 || cid3 == 0){
+	if(cid==0 || cid2==0 || cid3 == 0 || cid4==0){
 		// This is child
 		sigset((sig_handler)&interruptHandler);
 		for(int i = 0; i < 1; i++){
-			sleep(3);
+			sleep(4);
 		}
 		printf(1, "Exiting child!\n");
 		exit();
@@ -39,12 +42,12 @@ int main(void)
 		dps();
 		char *msg_child = (char *)malloc(MSGSIZE);
 		msg_child = "0000008\0";
-		int arr[] = { cid , cid2 , cid3 };
+		int arr[] = { cid , cid2 , cid3 , cid4 };
 		// printf(1, "Sending msg\n");
 		send_multi(getpid(), arr, msg_child);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
 		free(msg_child);
-		wait(); wait(); wait();
+		wait(); wait(); wait(); wait();
 	}
 	
 	exit();
