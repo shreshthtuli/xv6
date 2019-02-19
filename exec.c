@@ -102,6 +102,7 @@ exec(char *path, char **argv)
   curproc->sig_handler = (sig_handler)-1; // MOD-1 reset signal handler
   *curproc->msg = -1;
   curproc->disableSignals = 0;
+  curproc->interrupt = 0;
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

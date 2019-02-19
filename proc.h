@@ -55,8 +55,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   sig_handler sig_handler;     // MOD-1 : Signal handler for process
-  char* msg;                   // MOD-1 : Signal msg
+  char msg[message_size];      // MOD-1 : Signal msg
   int disableSignals;          // MOD-1 : Disable signals when currently processing one
+  int interrupt; 
 };
 
 // Process memory is laid out contiguously, low addresses first:

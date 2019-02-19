@@ -210,11 +210,12 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg)
 {
   char* ch;
   argint(0, &sender_pid);
-  argptr(1, (char**)rec_pids, sizeof(*rec_pids)/sizeof(rec_pids[0]));
+  argptr(1, (char**)rec_pids, 1);
   argptr(2, &ch, message_size);
   acquire(&lock);
   int result = 0;
-  for(int t = 0; t < sizeof(*rec_pids)/sizeof(rec_pids[0]); t++){
+  for(int t = 0; t < 1; t++){
+    // cprintf("Msg %s sent to pid : %d\n", ch, rec_pids[t]);
     int to = rec_pids[t];
     result = sigsend(to, ch);
     if(result < 0){

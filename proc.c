@@ -585,7 +585,10 @@ sigsend(int dest_pid, char* msg)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p->pid == dest_pid) {
+      cprintf("Setting string to %s\n", msg);
       memmove(p->msg, msg, message_size);
+      cprintf("Set string to %s\n", p->msg);
+      p->interrupt = 1;
       release(&ptable.lock);
       return 0; // successful execution
     }
@@ -616,21 +619,25 @@ sigret(void)
   p->disableSignals = 0; // enable handling next pending signal
 }
 
+
+// MOD-1 : Check signals pending
 void checkSignals(struct trapframe *tf)
 { 
-  // return;
   if((tf->cs & 3) != DPL_USER)
     return;
   struct proc *p = myproc();
   if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1)
     return; // currently handling a signal
-  if (*p->msg == -1)
+  if (*p->msg == -1 || p->interrupt != 1)
     return; // no pending signals
   p->disableSignals = 1; // Stop further signals
   memmove(p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
-  *((char*)(p->tf->esp - 4)) = *p->msg;
+  cprintf("Printing check signal %s\n", p->msg);
+  int temp = p->msg[6] - '0';
+  cprintf("Printing check signal %d\n", temp); // BAD WAY OF DOING THIS
+  *((int*)(p->tf->esp - 4)) = temp;
   *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
   p->tf->esp -= 8;
   p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
