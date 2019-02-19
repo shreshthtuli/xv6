@@ -205,7 +205,10 @@ fork(void)
   *np->tf = *curproc->tf;
 
   np->sig_handler = curproc->sig_handler; // Signal handler of parent
-
+  *np->msg = -1;
+  np->disableSignals = 0;
+  np->interrupt = 0;
+  
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
@@ -650,6 +653,18 @@ sigret(void)
   p->disableSignals = 0; // enable handling next pending signal
 }
 
+int myAtoi(char *str) 
+{ 
+    int res = 0; // Initialize result 
+   
+    // Iterate through all characters of input string and 
+    // update result 
+    for (int i = 0; str[i] != '\0'; ++i) 
+        res = res*10 + str[i] - '0'; 
+   
+    // return result. 
+    return res; 
+} 
 
 // MOD-1 : Check signals pending
 void checkSignals(struct trapframe *tf)
@@ -657,21 +672,27 @@ void checkSignals(struct trapframe *tf)
   if((tf->cs & 3) != DPL_USER)
     return;
   struct proc *p = myproc();
-  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1)
-    return; // currently handling a signal
-  if (*p->msg == -1 || p->interrupt != 1)
-    return; // no pending signals
+  acquire(&ptable.lock);
+  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1){
+    release(&ptable.lock);
+    return;
+  }
+  if (*p->msg == -1 || p->interrupt != 1){
+    release(&ptable.lock);
+    return;
+  }
   p->disableSignals = 1; // Stop further signals
   p->interrupt = 0;
   memmove(p->Oldtf, p->tf, sizeof(struct trapframe)); //backing up trap frame
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   // cprintf("Printing check signal %s\n", p->msg);
-  int temp = p->msg[6] - '0';
+  int temp = myAtoi(p->msg);
   // cprintf("Printing check signal %d\n", temp); // BAD WAY OF DOING THIS
   *((int*)(p->tf->esp - 4)) = temp;
   *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
   p->tf->esp -= 8;
   p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
   *p->msg = -1;
+  release(&ptable.lock);
 }

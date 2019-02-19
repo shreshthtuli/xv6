@@ -182,8 +182,8 @@ sys_send(int sender_pid, int rec_pid, void *msg)
       kern.to_pids[i] = rec_pid;
       release(&kern.lock);
       release(&lock);
-      cprintf("Waking up %d\n", rec_pid);
-      wakeup_process(rec_pid);
+      // cprintf("Waking up %d\n", rec_pid);
+      // wakeup_process(rec_pid);
       // cprintf("Exit send : %s\n", buffers[i]);
       return 0;
     }    
@@ -200,7 +200,7 @@ sys_recv(void *msg)
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
   int i = 0;
-  while(1){
+  // while(1){
     for(i = 0; i < num_message_buffers; i++){
       if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
         acquire(&kern.lock);
@@ -215,8 +215,8 @@ sys_recv(void *msg)
         return 0;
       }
     }
-    sleep_process(me);
-  }
+    // sleep_process(me);
+  // }
   return -1;
 }
 
