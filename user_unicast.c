@@ -13,12 +13,15 @@ int main(void)
 		// This is child
 		char *msg = (char *)malloc(MSGSIZE);
 		recv(msg);
-		printf(1,"2 CHILD: msg recv is: %s \n", msg );
+		int a = (int)*msg;
+		printf(1,"2 CHILD: msg recv is: %s : %d \n", msg, a );
 		exit();
 	}else{
 		// This is parent
 		char *msg_child = (char *)malloc(MSGSIZE);
-		msg_child = "hello!!\0";
+		char* a = "aaaaaa\0";
+		*a = 9;
+		msg_child = a;
 		send(getpid(),cid,msg_child);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
 		free(msg_child);

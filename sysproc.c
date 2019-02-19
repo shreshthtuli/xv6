@@ -9,7 +9,7 @@
 #include "syscall_trace.h"
 #include "spinlock.h"
 
-#define num_message_buffers 20
+#define num_message_buffers 1000
 #define message_size 8
 
 typedef void (* sig_handler) (char* msg);
