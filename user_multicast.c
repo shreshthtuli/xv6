@@ -27,7 +27,7 @@ int main(void)
 	}else{
 		// This is parent
 		char *msg_child = (char *)malloc(MSGSIZE);
-		msg_child = "hello!!!";
+		msg_child = "hello!!\0";
 		int arr[1] = { cid };
 		printf(1, "Sending msg\n");
 		send_multi(getpid(), *arr, msg_child);	

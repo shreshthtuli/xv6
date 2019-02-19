@@ -165,12 +165,12 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == -1){
-      cprintf("Enter send\n");
+      // cprintf("Enter send\n");
       memmove(buffers[i], ch, message_size);
       from_pids[i] = sender_pid;
       to_pids[i] = rec_pid;
       release(&lock);
-      cprintf("Exit send : %s\n", buffers[i]);
+      // cprintf("Exit send : %s\n", buffers[i]);
       return 0;
     }    
   }
@@ -185,18 +185,20 @@ sys_recv(void *msg)
   char* ch;
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
-  acquire(&lock);
-  for(int i = 0; i < num_message_buffers; i++){
-    if(to_pids[i] == me){
-      cprintf("Enter recv\n");
-      memmove(ch, buffers[i], message_size);
-      to_pids[i] = -1;
-      release(&lock);
-      cprintf("Exit recv : %s\n", buffers[i]);
-      return 0;
-    }    
+  int i = 0;
+  while(1){
+    for(i = 0; i < num_message_buffers; i++){
+      if(to_pids[i] == me){
+        acquire(&lock);
+        // cprintf("Enter recv\n");
+        memmove(ch, buffers[i], message_size);
+        to_pids[i] = -1;
+        release(&lock);
+        // cprintf("Exit recv : %s\n", buffers[i]);
+        return 0;
+      }
+    }
   }
-  release(&lock);
   return -1;
 }
 

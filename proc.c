@@ -618,7 +618,7 @@ sigret(void)
 
 void checkSignals(struct trapframe *tf)
 { 
-  return;
+  // return;
   if((tf->cs & 3) != DPL_USER)
     return;
   struct proc *p = myproc();
