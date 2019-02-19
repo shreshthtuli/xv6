@@ -18,7 +18,6 @@ char buffers[num_message_buffers][8] = { "        " };
 int from_pids[20] = { -1 };
 int to_pids[20] = { -1 };
 
-
 int
 sys_fork(void)
 {
@@ -208,16 +207,20 @@ int sigsend(int dest_pid, char* msg);
 int
 sys_send_multi(int sender_pid, int rec_pids[], void *msg)
 {
+  int* pid;
   char* ch;
   argint(0, &sender_pid);
-  argptr(1, (char**)rec_pids, 1);
+  argptr(1, (char**)&pid, 64);
   argptr(2, &ch, message_size);
   acquire(&lock);
   int result = 0;
-  for(int t = 0; t < 1; t++){
-    // cprintf("Msg %s sent to pid : %d\n", ch, rec_pids[t]);
-    int to = rec_pids[t];
+  for(int t = 0; t < 64; t++){
+    int to = *pid;
+    if(to <= 0 || to > 64)
+      break;
+    cprintf("Msg %s sent to pid : %d\n", ch, *pid);
     result = sigsend(to, ch);
+    pid += 1;
     if(result < 0){
       release(&lock);
       return -1;
