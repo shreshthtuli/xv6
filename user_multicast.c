@@ -26,7 +26,7 @@ int main(void)
 		goto child;
 	int cid3 = fork();
 	child:
-	if(cid==0 || cid2==0){
+	if(cid==0 || cid2==0 || cid3 == 0){
 		// This is child
 		sigset((sig_handler)&interruptHandler);
 		for(int i = 0; i < 1; i++){

@@ -23,7 +23,7 @@ main(int argc, char *argv[])
 	int fd = open(filename, 0);
 	for(int i=0; i<size; i++){
 		read(fd, &c, 1);
-		arr[i]=c-'0';
+		arr[i]=0; //c-'0';
 		read(fd, &c, 1);
 	}	
   	close(fd);
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 		for(int i = 0; i < size/8; i++){
 			recv(msg);
 			val = msg[7] - '0';
-			printf(1, "msg %d, %d\n", getpid(), val);
+			printf(1, "msg %s, %d, %d\n", msg, getpid(), val);
 			partial_sum += val;
 		}
 		msg = "0000000\0";
@@ -92,6 +92,7 @@ main(int argc, char *argv[])
 			for(int j = 0; j < size/8; j++){
 				val = arr[index];
 				data[7] = val + '0';
+				printf(1, "Data %s\n", data);
 				send(getpid(), to, data);
 				index++;
 			}
@@ -107,9 +108,11 @@ main(int argc, char *argv[])
 			total += temp;
 		}
 		int mean = total / size;
-		printf(1, "Mean = %d", mean);
+		printf(1, "Mean = %d\n", mean);
 		tot_sum = total;
-		wait();
+		for(int i = 0; i < 8; i++){
+			wait();
+		}
 	}
 
 	

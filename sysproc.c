@@ -14,9 +14,18 @@
 
 typedef void (* sig_handler) (char* msg);
 
-char buffers[num_message_buffers][8] = { "        " };
-int from_pids[20] = { -1 };
-int to_pids[20] = { -1 };
+typedef struct{
+  struct spinlock lock;
+  char buffers[num_message_buffers][8];
+  int from_pids[20];
+  int to_pids[20];
+} kernel_buffers;
+
+kernel_buffers kern = {
+  .buffers = { "        " },
+  .from_pids = { -1 },
+  .to_pids = { -1 }
+};
 
 int
 sys_fork(void)
@@ -153,7 +162,6 @@ sys_dps(void)
 }
 
 // MOD-1 : System call to send message of 8 bytes
-struct spinlock lock;
 int
 sys_send(int sender_pid, int rec_pid, void *msg)
 {
@@ -161,19 +169,19 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   argint(0, &sender_pid);
   argint(1, &rec_pid);
   argptr(2, &ch, message_size);
-  acquire(&lock);
+  acquire(&kern.lock);
   for(int i = 0; i < num_message_buffers; i++){
-    if(to_pids[i] == -1){
+    if(kern.to_pids[i] == -1){
       // cprintf("Enter send\n");
-      memmove(buffers[i], ch, message_size);
-      from_pids[i] = sender_pid;
-      to_pids[i] = rec_pid;
-      release(&lock);
+      memmove(kern.buffers[i], ch, message_size);
+      kern.from_pids[i] = sender_pid;
+      kern.to_pids[i] = rec_pid;
+      release(&kern.lock);
       // cprintf("Exit send : %s\n", buffers[i]);
       return 0;
     }    
   }
-  release(&lock);
+  release(&kern.lock);
   return -1;
 }
 
@@ -187,12 +195,12 @@ sys_recv(void *msg)
   int i = 0;
   while(1){
     for(i = 0; i < num_message_buffers; i++){
-      if(to_pids[i] == me){
-        acquire(&lock);
-        // cprintf("Enter recv\n");
-        memmove(ch, buffers[i], message_size);
-        to_pids[i] = -1;
-        release(&lock);
+      if(kern.to_pids[i] == me){
+        acquire(&kern.lock);
+        cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+        memmove(ch, kern.buffers[i], message_size);
+        kern.to_pids[i] = -1;
+        release(&kern.lock);
         // cprintf("Exit recv : %s\n", buffers[i]);
         return 0;
       }
@@ -212,7 +220,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg)
   argint(0, &sender_pid);
   argptr(1, (char**)&pid, 64);
   argptr(2, &ch, message_size);
-  acquire(&lock);
+  acquire(&kern.lock);
   int result = 0;
   for(int t = 0; t < 64; t++){
     int to = *pid;
@@ -222,11 +230,11 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg)
     result = sigsend(to, ch);
     pid += 1;
     if(result < 0){
-      release(&lock);
+      release(&kern.lock);
       return -1;
     }
   }
-  release(&lock);
+  release(&kern.lock);
   return 0;
 }
 
