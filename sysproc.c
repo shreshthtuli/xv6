@@ -158,14 +158,15 @@ struct spinlock lock;
 int
 sys_send(int sender_pid, int rec_pid, void *msg)
 {
+  char* ch;
   argint(0, &sender_pid);
   argint(1, &rec_pid);
-  argptr(2, (char**)&msg, message_size);
+  argptr(2, &ch, message_size);
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == -1){
       cprintf("Enter send\n");
-      memmove(buffers[i], msg, message_size);
+      memmove(buffers[i], ch, message_size);
       from_pids[i] = sender_pid;
       to_pids[i] = rec_pid;
       release(&lock);
@@ -181,14 +182,17 @@ sys_send(int sender_pid, int rec_pid, void *msg)
 int
 sys_recv(void *msg)
 {
-  argptr(0, (char**)&msg, message_size);
+  char* ch;
+  argptr(0, &ch, message_size);
   int me = myproc()->pid;
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(to_pids[i] == me){
-      memmove(msg, buffers[i], message_size);
+      cprintf("Enter recv\n");
+      memmove(ch, buffers[i], message_size);
       to_pids[i] = -1;
       release(&lock);
+      cprintf("Exit recv : %s\n", buffers[i]);
       return 0;
     }    
   }
@@ -202,14 +206,15 @@ int sigsend(int dest_pid, char* msg);
 int
 sys_send_multi(int sender_pid, int rec_pids[], void *msg)
 {
+  char* ch;
   argint(0, &sender_pid);
   argptr(1, (char**)rec_pids, sizeof(*rec_pids)/sizeof(rec_pids[0]));
-  argptr(2, (char**)&msg, message_size);
+  argptr(2, &ch, message_size);
   acquire(&lock);
   int result = 0;
   for(int t = 0; t < sizeof(*rec_pids)/sizeof(rec_pids[0]); t++){
     int to = rec_pids[t];
-    result = sigsend(to, msg);
+    result = sigsend(to, ch);
     if(result < 0){
       release(&lock);
       return -1;
