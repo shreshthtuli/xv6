@@ -22,6 +22,9 @@ int main(void)
 	if(cid == 0)
 		goto child;
 	int cid2 = fork();
+	if(cid2 == 0)
+		goto child;
+	int cid3 = fork();
 	child:
 	if(cid==0 || cid2==0){
 		// This is child
@@ -36,12 +39,12 @@ int main(void)
 		dps();
 		char *msg_child = (char *)malloc(MSGSIZE);
 		msg_child = "0000008\0";
-		int arr[] = { cid , cid2 };
+		int arr[] = { cid , cid2 , cid3 };
 		// printf(1, "Sending msg\n");
-		send_multi(getpid(), &arr[0], msg_child);	
+		send_multi(getpid(), arr, msg_child);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
 		free(msg_child);
-		wait(); wait();
+		wait(); wait(); wait();
 	}
 	
 	exit();
