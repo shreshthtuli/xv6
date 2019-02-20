@@ -18,7 +18,9 @@ int main(void)
 		exit();
 	}else{
 		// This is parent
+		dps();
 		int a = 9;
+		// sleep(10);
 		send(getpid(),cid, &a);	
 		printf(1,"1 PARENT: msg sent is: %d \n", (int)a );
 		free(&a);
