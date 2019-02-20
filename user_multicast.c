@@ -7,6 +7,7 @@
 void interruptHandler(int msg){
 	printf(1, "Interrupt msg received : %d\n", msg);
 	printf(1, "Done!");
+	exit();
 }
 
 
@@ -17,26 +18,24 @@ int main(void)
 	sigset((sig_handler)&interruptHandler);
 
 	printf(1, "Signal handler set\n");
+	int cid= -1, cid2=-1, cid3=-1, cid4=-1;
 
-	int cid = fork();
+	cid = fork();
 	if(cid == 0)
 		goto child;
-	int cid2 = fork();
+	cid2 = fork();
 	if(cid2 == 0)
 		goto child;
-	int cid3 = fork();
+	cid3 = fork();
 	if(cid3 == 0)
 		goto child;
-	int cid4 = fork();
+	cid4 = fork();
 	child:
 	if(cid==0 || cid2==0 || cid3 == 0 || cid4==0){
 		// This is child
 		sigset((sig_handler)&interruptHandler);
-		for(int i = 0; i < 1; i++){
-			sleep(4);
-		}
+		while(1){;}
 		printf(1, "Exiting child!\n");
-		exit();
 	}else{
 		// This is parent
 		dps();
@@ -46,7 +45,7 @@ int main(void)
 		// printf(1, "Sending msg\n");
 		send_multi(getpid(), arr, msg_child);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
-		free(msg_child);
+		// free(msg_child);
 		wait(); wait(); wait(); wait();
 	}
 	

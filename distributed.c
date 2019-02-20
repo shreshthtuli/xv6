@@ -38,16 +38,18 @@ main(int argc, char *argv[])
 	int tot_sum = 0;	
 	float variance = 0.0;
 
-	char c = '0';
+	char c = (char)'0';
 	int fd = open(filename, 0);
+	printf(1, "filename %s", filename);
 	for(int i=0; i<size; i++){
 		read(fd, &c, 1);
-		arr[i]= (int)c - '0';
+		arr[i]= c - '0';
 		read(fd, &c, 1);
 	}	
   	close(fd);
   	// this is to supress warning
   	printf(1,"first elem %d\n", arr[0]);
+
 	for(int i = 0; i < size; i++){
 		printf(1,"%d\n", arr[i]);
 	}

@@ -140,8 +140,11 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+
   p->sig_handler = (sig_handler)-1; // MOD-1 : init process has not handler
   p->disableSignals = 0; // MOD-1
+  p->interrupt = 0;
+  *p->msg = -1;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
