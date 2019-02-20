@@ -1,7 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#define size 100
+#define size 1000
 #define procs 2
 
 short arr[size];

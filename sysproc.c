@@ -19,6 +19,7 @@ typedef struct{
   char buffers[num_message_buffers][8];
   int from_pids[num_message_buffers];
   int to_pids[num_message_buffers];
+  int wait_queue[NPROC];
 } kernel_buffers;
 
 kernel_buffers kern = {
@@ -175,8 +176,8 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   acquire(&kern.lock);
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
-    if(kern.to_pids[i] == -1){
-      // cprintf("Enter send\n");
+    if(kern.to_pids[i] <= 0){
+      cprintf("Enter send %d\n", i);
       memmove(kern.buffers[i], ch, message_size);
       kern.from_pids[i] = sender_pid;
       kern.to_pids[i] = rec_pid;
