@@ -4,8 +4,8 @@
 
 #define MSGSIZE 8
 
-void interruptHandler(int msg){
-	printf(1, "Interrupt msg received : %d\n", msg);
+void interruptHandler(int* msg){
+	printf(1, "Interrupt msg received : %d\n", (int)msg);
 	printf(1, "Done!");
 	exit();
 }
@@ -39,12 +39,13 @@ int main(void)
 	}else{
 		// This is parent
 		dps();
-		char *msg_child = (char *)malloc(MSGSIZE);
-		msg_child = "0000008\0";
+		// char *msg_child = (char *)malloc(MSGSIZE);
+		// msg_child = "0000008\0";
+		int msg_child = 8.8;
 		int arr[] = { cid , cid2 , cid3 , cid4 };
 		// printf(1, "Sending msg\n");
-		send_multi(getpid(), arr, msg_child);	
-		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
+		send_multi(getpid(), arr, &msg_child);	
+		printf(1,"1 PARENT: msg sent is: %d \n", (int)msg_child );
 		// free(msg_child);
 		wait(); wait(); wait(); wait();
 	}

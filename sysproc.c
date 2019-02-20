@@ -173,10 +173,10 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   argint(1, &rec_pid);
   argptr(2, &ch, message_size);
   acquire(&kern.lock);
+  acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
     if(kern.to_pids[i] == -1){
       // cprintf("Enter send\n");
-      acquire(&lock);
       memmove(kern.buffers[i], ch, message_size);
       kern.from_pids[i] = sender_pid;
       kern.to_pids[i] = rec_pid;
@@ -189,6 +189,7 @@ sys_send(int sender_pid, int rec_pid, void *msg)
     }    
   }
   release(&kern.lock);
+  release(&lock);
   return -1;
 }
 
@@ -200,21 +201,23 @@ sys_recv(void *msg)
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
   int i = 0;
+  acquire(&kern.lock);
+  acquire(&lock);
   // while(1){
     for(i = 0; i < num_message_buffers; i++){
       if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
-        acquire(&kern.lock);
-        acquire(&lock);
-        cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+        // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
         memmove(ch, kern.buffers[i], message_size);
         kern.to_pids[i] = -1;
         kern.buffers[i][0] = ' ';
         release(&kern.lock);
         release(&lock);
-        cprintf("Exit recv : %d\n", i);
+        // cprintf("Exit recv : %d, %s\n", i, ch);
         return 0;
       }
     }
+    release(&kern.lock);
+    release(&lock);
     // sleep_process(me);
   // }
   return -1;

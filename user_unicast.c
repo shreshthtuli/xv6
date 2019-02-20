@@ -11,20 +11,17 @@ int main(void)
 	int cid = fork();
 	if(cid==0){
 		// This is child
-		char *msg = (char *)malloc(MSGSIZE);
-		recv(msg);
-		int a = (int)*msg;
-		printf(1,"2 CHILD: msg recv is: %s : %d \n", msg, a );
+		int msg;
+		recv(&msg);
+		// int a = (int)*msg;
+		printf(1,"2 CHILD: msg recv is: %s : %d \n", msg, (int)msg );
 		exit();
 	}else{
 		// This is parent
-		char *msg_child = (char *)malloc(MSGSIZE);
-		char* a = "aaaaaa\0";
-		*a = 9;
-		msg_child = a;
-		send(getpid(),cid,msg_child);	
-		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
-		free(msg_child);
+		int a = 9;
+		send(getpid(),cid, &a);	
+		printf(1,"1 PARENT: msg sent is: %d \n", (int)a );
+		free(&a);
 		wait();
 	}
 	

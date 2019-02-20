@@ -656,19 +656,6 @@ sigret(void)
   p->disableSignals = 0; // enable handling next pending signal
 }
 
-int myAtoi(char *str) 
-{ 
-    int res = 0; // Initialize result 
-   
-    // Iterate through all characters of input string and 
-    // update result 
-    for (int i = 0; str[i] != '\0'; ++i) 
-        res = res*10 + str[i] - '0'; 
-   
-    // return result. 
-    return res; 
-} 
-
 // MOD-1 : Check signals pending
 void checkSignals(struct trapframe *tf)
 { 
@@ -690,9 +677,11 @@ void checkSignals(struct trapframe *tf)
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   // cprintf("Printing check signal %s\n", p->msg);
-  int temp = myAtoi(p->msg);
-  // cprintf("Printing check signal %d\n", temp); // BAD WAY OF DOING THIS
-  *((int*)(p->tf->esp - 4)) = temp;
+  // cprintf("Printing check signal %d\n", (int)&p->msg); 
+  // int temp = (int)&p->msg; // GOOD WAY OF DOING THIS
+  // int temp = myAtof(p->msg); // BAD WAY OF DOING THIS
+  memmove(((char*)(p->tf->esp - 4)), p->msg, MSGSIZE);
+  // *((int*)(p->tf->esp - 4)) = temp;
   *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
   p->tf->esp -= 8;
   p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler

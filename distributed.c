@@ -1,25 +1,21 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#define size 16
+#define size 100
+#define procs 2
 
 short arr[size];
 int parent_pid;
 int num;
 
-void signal_handler(int mean){
-	printf(1, "Mean : %d, %d\n", mean, arr[num*size/8]);
+void signal_handler(int* mean){
+	printf(1, "Interrupt msg received : %d\n", (int)mean);
+	printf(1, "Mean : %d, %d\n", mean, arr[num*size/procs]);
 	int varsum = 0;
-	for(int i = num*size/8; i < (num+1)*size/8; i++){
-		varsum += (mean - arr[i])*(mean - arr[i]);
+	for(int i = num*size/procs; i < (num+1)*size/procs; i++){
+		varsum += ((int)mean - arr[i])*((int)mean - arr[i]);
 	}
-	char* msg = (char *)malloc(8);
-	msg = "0000000\0";
-	msg[6] = varsum%10 + '0';
-	msg[5] = (varsum/10)%10 + '0';
-	msg[4] = (varsum/100)%10 + '0';
-	msg[3] = (varsum/100)%10 + '0';
-	send(getpid(), parent_pid, msg);
+	send(getpid(), parent_pid, &varsum);
 	exit();
 }	
 
@@ -54,23 +50,24 @@ main(int argc, char *argv[])
 		printf(1,"%d\n", arr[i]);
 	}
 
-	int mean;
+	float mean;
   
   	//----FILL THE CODE HERE for unicast sum and multicast variance
 
-	int child_pids[8];
+	int child_pids[procs];
 
 	parent_pid = getpid();
 	int child_flag = 1;
 
 	int pid = -2;
-	for(int i = 0; i < 8; i++){
+	for(int i = 0; i < procs; i++){
+		num= i;
 		pid = fork();
-		if (pid == 0){
+		if (pid != 0)
+			child_pids[i] = pid;
+		else
 			goto child;
-		}
 		printf(1, "Init %d\n", pid);
-		child_pids[i] = pid;
 	}
 
 	child_flag = 0;
@@ -81,72 +78,49 @@ main(int argc, char *argv[])
 		// Child process
 		sigset((sig_handler)&signal_handler);
 		printf(1, "Child proc %d\n", getpid());
-		char* msg = (char *)malloc(8);
-		msg = "0000000\0";
 		int partial_sum = 0;
-		while(recv(msg) == -1){};
-		num = atoi(msg);
-		for(int i = num*size/8; i < (num+1)*size/8; i++){
+		for(int i = num*size/procs; i < (num+1)*size/procs; i++){
 			partial_sum += arr[i];
 		}
-		msg = "0000000\0";
-		msg[6] = partial_sum%10 + '0';
-		msg[5] = (partial_sum/10)%10 + '0';
-		msg[4] = (partial_sum/100)%10 + '0';
-		msg[3] = (partial_sum/100)%10 + '0';
-		printf(1, "Partial sum from proc %d is %s from %d\n", getpid(), msg, partial_sum);
-		send(getpid(), parent_pid, msg); 
-		sleep(10);
-		// exit();
+		printf(1, "Partial sum from proc %d is %d\n", num, partial_sum);
+		send(getpid(), parent_pid, &partial_sum); 
+		while(1){;}
+		printf(1, "Exiting child!\n");
+		exit();
 	}
 	else{
 		printf(1, "Parent proc %d", getpid());
-		int to;
-		char* data = (char *)malloc(8);
-		data = "0000000\0";
-		// Coordinator process
-		for(int i = 0; i < 8; i++){
-			// Select ith child process
-			to = child_pids[i];
-			printf(1, "Sending to proc %d\n", i);
-			// Send number of process
-			data[6] = i + '0';
-			send(getpid(), to, data);
-		}
+		// int to;
 
 		int total = 0;
 		int temp = 0;
 		// Get results
-		for(int i = 0; i < 8; i++){
-			recv(data);
-			temp = atoi(data);
-			printf(1, "Got results %d from %d so total = %d\n", temp, getpid(), total);
+		for(int i = 0; i < procs; i++){
+			while(recv(&temp) == -1){};
 			total += temp;
+			printf(1, "Got results1 %d from %d so total = %d\n", temp, i, total);
 		}
 		mean = total / size;
-		printf(1, "Mean = %d\n", mean);
+		printf(1, "Mean = %d\n", (int)mean);
 		tot_sum = total;
 
-		data = "0000000\0";
-		data[6] = mean%10 + '0';
-		data[5] = (mean/10)%10 + '0';
-		data[4] = (mean/100)%10 + '0';
-		data[3] = (mean/100)%10 + '0';
-		send_multi(getpid(), child_pids, data);
+		int a = mean;
 
-		total = 0;
-		temp = 0;
+		int p = send_multi(parent_pid, child_pids, &a);
+		printf(1, "Result of send multi = %d\n", p);
+
+		float total2 = 0;
+		int temp2 = 0;
 		// Get results
-		for(int i = 0; i < 8; i++){
-			recv(data);
-			temp = atoi(data);
-			printf(1, "Got results %d from %d so total = %d\n", temp, i, total);
-			total += temp;
+		for(int i = 0; i < procs; i++){
+			while(recv(&temp2) == -1){};
+			total2 += temp2;
+			printf(1, "Got results2 %d from %d so total = %d\n", temp2, i, total2);
 		}
 
-		variance = (float) total / size;
+		variance = total / size;
 
-		for(int i = 0; i < 8; i++){
+		for(int i = 0; i < procs; i++){
 			wait();
 		}
 	}
