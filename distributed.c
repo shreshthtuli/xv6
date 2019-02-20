@@ -38,7 +38,7 @@ main(int argc, char *argv[])
 	int tot_sum = 0;	
 	float variance = 0.0;
 
-	char c = (char)'0';
+	char c;
 	int fd = open(filename, 0);
 	printf(1, "filename %s", filename);
 	for(int i=0; i<size; i++){
