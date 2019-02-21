@@ -46,9 +46,9 @@ main(int argc, char *argv[])
   	// this is to supress warning
   	printf(1,"first elem %d\n", arr[0]);
 
-	for(int i = 0; i < size; i++){
-		printf(1,"%d\n", arr[i]);
-	}
+	// for(int i = 0; i < size; i++){
+	// 	printf(1,"%d\n", arr[i]);
+	// }
 
 	float mean;
   
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 
 		int a = mean;
 
-		int p = send_multi(parent_pid, child_pids, &a);
+		int p = send_multi(parent_pid, child_pids, &a, procs);
 		printf(1, "Result of send multi = %d\n", p);
 
 		float total2 = 0;

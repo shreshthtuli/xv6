@@ -32,7 +32,7 @@ int ps(void);
 int dps(void); // Extra
 int send(int, int, void*);
 int recv(void*);
-int send_multi(int, int*, void*);
+int send_multi(int, int*, void*, int);
 int sigset(sig_handler);
 int sigret(void);
 
