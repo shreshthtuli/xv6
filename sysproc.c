@@ -20,7 +20,7 @@ typedef struct{
   int from_pids[num_message_buffers];
   int to_pids[num_message_buffers];
   int wait_queue[NPROC];
-  int wait_buffer[NPROC];
+  char* wait_buffer[NPROC];
 } kernel_buffers;
 
 kernel_buffers kern = {
@@ -181,8 +181,7 @@ sys_send(int sender_pid, int rec_pid, void *msg)
     if(kern.to_pids[i] <= 0){
       if(kern.wait_queue[rec_pid] == 1){
         // The receiver is waiting already
-        release(&lock);
-        memmove((char*)kern.wait_buffer[rec_pid], ch, message_size);
+        memmove(kern.wait_buffer[rec_pid], ch, message_size);
         cprintf("Waking up %d\n", rec_pid);
         // Remove from wait queue
         kern.wait_queue[rec_pid] = 0;
@@ -191,11 +190,12 @@ sys_send(int sender_pid, int rec_pid, void *msg)
       }
       else{
         // Store in buffer
-        cprintf("Process not in wait queue %d\n", rec_pid);
+        cprintf("Sender sent first %d\n", rec_pid);
         memmove(kern.buffers[i], ch, message_size);
         kern.from_pids[i] = sender_pid;
         kern.to_pids[i] = rec_pid;
       }
+      release(&lock);
       release(&kern.lock);
       return 0;
     }
@@ -215,6 +215,7 @@ sys_recv(void *msg)
   int i = 0;
   acquire(&kern.lock);
   acquire(&lock);
+  cprintf("Entered recv\n");
   for(i = 0; i < num_message_buffers; i++){
     if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
       cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
@@ -229,12 +230,12 @@ sys_recv(void *msg)
   }
   // Put myself in wait queue if no message
   kern.wait_queue[me] = 1;
-  kern.wait_buffer[me] = (int)ch;
+  argptr(0, &kern.wait_buffer[me], 4);
   // Sleep me
   cprintf("Sleeping %d\n", me);
   release(&lock);
-  release(&kern.lock);
   sleep((void*)me, &kern.lock);
+  release(&kern.lock);
   return 0;
 }
 
@@ -242,23 +243,21 @@ sys_recv(void *msg)
 // MOD-1 : System call to send message in multi-cast
 int sigsend(int dest_pid, char* msg);
 int
-sys_send_multi(int sender_pid, int rec_pids[], void *msg)
+sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
 {
   int* pid;
   char* ch;
+  int num;
   argint(0, &sender_pid);
   argptr(1, (char**)&pid, 64);
   argptr(2, &ch, message_size);
+  argint(3, &num);
   acquire(&kern.lock);
   acquire(&lock);
   int result = 0;
-  for(int t = 0; t < 64; t++){
-    int to = *pid;
-    if(to <= 0 || to > 64)
-      break;
-    cprintf("Msg %s sent to pid : %d\n", ch, *pid);
-    result = sigsend(to, ch);
-    pid += 1;
+  for(int t = 0; t < num; t++){
+    cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
       release(&lock);

@@ -36,6 +36,7 @@ int main(void)
 		sigset((sig_handler)&interruptHandler);
 		while(1){;}
 		printf(1, "Exiting child!\n");
+		exit();
 	}else{
 		// This is parent
 		dps();
@@ -44,7 +45,7 @@ int main(void)
 		int msg_child = 8.8;
 		int arr[] = { cid , cid2 , cid3 , cid4 };
 		// printf(1, "Sending msg\n");
-		send_multi(getpid(), arr, &msg_child);	
+		send_multi(getpid(), arr, &msg_child, 4);	
 		printf(1,"1 PARENT: msg sent is: %d \n", (int)msg_child );
 		// free(msg_child);
 		wait(); wait(); wait(); wait();
