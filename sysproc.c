@@ -258,7 +258,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
     if(result < 0){
       release(&kern.lock);
       release(&lock);
-      return -1;
+      return -1; // Return error
     }
   }
   release(&kern.lock);
@@ -273,8 +273,8 @@ sys_sigset(sig_handler func)
 {
   int sighandler;
   argint(0, &sighandler);
-  sigset((sig_handler) sighandler);
-  return 1;
+  myproc()->sig_handler = (sig_handler) sighandler;
+  return 0;
 }
 
 // MOD-1 : Syscall for returning from trap
