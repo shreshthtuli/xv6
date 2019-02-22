@@ -605,17 +605,6 @@ sigsend(int dest_pid, char* msg)
   return -1;
 }
 
-// MOD-1 : System call for setting signal handler
-int
-sigset(sig_handler new_sighandler)
-{
-  // cprintf("Entered sigset\n");
-  struct proc *p = myproc();
-  p->sig_handler = new_sighandler;
-  // cprintf("Exiting sigset from pid %d\n", p->pid);
-  return 0;
-}
-
 // MOD-1 : Return from trap
 void
 sigret(void)
@@ -632,11 +621,7 @@ void checkSignals(struct trapframe *tf)
     return;
   struct proc *p = myproc();
   acquire(&ptable.lock);
-  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1){
-    release(&ptable.lock);
-    return;
-  }
-  if (*p->msg == -1 || p->interrupt != 1){
+  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || *p->msg == -1 || p->interrupt != 1){
     release(&ptable.lock);
     return;
   }
@@ -647,13 +632,10 @@ void checkSignals(struct trapframe *tf)
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   // cprintf("Printing check signal %s\n", p->msg);
   // cprintf("Printing check signal %d\n", (int)&p->msg); 
-  // int temp = (int)&p->msg; // GOOD WAY OF DOING THIS
-  // int temp = myAtof(p->msg); // BAD WAY OF DOING THIS
   memmove(((char*)(p->tf->esp - 4)), p->msg, MSGSIZE);
-  // *((int*)(p->tf->esp - 4)) = temp;
   *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
   p->tf->esp -= 8;
-  p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
-  *p->msg = -1;
+  p->tf->eip = (uint)p->sig_handler; // resume from signal handler
+  *p->msg = -1; // reset process message
   release(&ptable.lock);
 }
