@@ -21,13 +21,13 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 // MOD-1 : Additional syscalls
-#define SYS_print_count 23
-#define SYS_toggle 24
-#define SYS_add    25
-#define SYS_ps     26
-#define SYS_dps    27
-#define SYS_send   28
-#define SYS_recv   29
-#define SYS_send_multi 30
-#define SYS_sigset 31
-#define SYS_sigret 32
+#define SYS_print_count 22
+#define SYS_toggle 23
+#define SYS_add    24
+#define SYS_ps     25
+#define SYS_dps    26
+#define SYS_send   27
+#define SYS_recv   28
+#define SYS_send_multi 29
+#define SYS_sigset 30
+#define SYS_sigret 31

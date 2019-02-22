@@ -180,7 +180,7 @@ char* syscallnames[] = {
     "sys_toggle",
     "sys_add",
     "sys_ps",
-    "ssys_dps",
+    "sys_dps",
     "sys_send",
     "sys_recv",
     "sys_send_multi",
@@ -190,7 +190,7 @@ char* syscallnames[] = {
 
 int num_sys_calls = NELEM(syscallnames);
 
-int* syscallcounts[NELEM(syscalls)] = { 0 };
+int syscallcounts[NELEM(syscalls)] = { 0 };
 
 void
 syscall(void)
@@ -202,10 +202,10 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // MOD-1 : Increment syscall counts if trace is on
     if(trace == 1){
-      syscallcounts[num] = syscallcounts[num] + 1;
+      syscallcounts[num-1] = syscallcounts[num-1] + 1;
     }
     // MOD-1 : Print syscall
-    // cprintf("%s %d\n", syscallnames[num], syscallcounts[num]);
+    // cprintf("DEBUG : %s %d\n", syscallnames[num-1], syscallcounts[num-1]);
 
     curproc->tf->eax = syscalls[num]();
   } else {

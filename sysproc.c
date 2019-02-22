@@ -20,7 +20,6 @@ typedef struct{
   int from_pids[num_message_buffers];
   int to_pids[num_message_buffers];
   int wait_queue[NPROC];
-  char* wait_buffer[NPROC];
 } kernel_buffers;
 
 kernel_buffers kern = {
@@ -118,7 +117,8 @@ int
 sys_print_count(void)
 {
   for(uint i = 0; i < num_sys_calls; i++){
-    cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
+    if(syscallcounts[i] > 0)
+      cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
   }
   return 0;
 }
@@ -131,7 +131,7 @@ sys_toggle(void)
   // MOD-1 : Reset all counts
   if(trace == 1){
     for(uint i = 0; i < num_sys_calls; i++){
-      syscallcounts[i] = 0;
+      syscallcounts[i] = 0; 
     }
   }
   return 0;
@@ -178,22 +178,18 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   acquire(&kern.lock);
   acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
-    if(kern.to_pids[i] <= 0){
+    if(kern.to_pids[i] <= 0){        
+      memmove(kern.buffers[i], ch, message_size);
+      kern.from_pids[i] = sender_pid;
+      kern.to_pids[i] = rec_pid;
       if(kern.wait_queue[rec_pid] == 1){
         // The receiver is waiting already
-        memmove(kern.wait_buffer[rec_pid], ch, message_size);
-        cprintf("Waking up %d\n", rec_pid);
+        // cprintf("Sender came second %d\n", rec_pid);
+        // cprintf("Waking up %d\n", rec_pid);
         // Remove from wait queue
         kern.wait_queue[rec_pid] = 0;
         // Wakeup reciever
         wakeup((void*)rec_pid);
-      }
-      else{
-        // Store in buffer
-        cprintf("Sender sent first %d\n", rec_pid);
-        memmove(kern.buffers[i], ch, message_size);
-        kern.from_pids[i] = sender_pid;
-        kern.to_pids[i] = rec_pid;
       }
       release(&lock);
       release(&kern.lock);
@@ -213,29 +209,30 @@ sys_recv(void *msg)
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
   int i = 0;
-  acquire(&kern.lock);
-  acquire(&lock);
-  cprintf("Entered recv\n");
-  for(i = 0; i < num_message_buffers; i++){
-    if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
-      cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
-      memmove(ch, kern.buffers[i], message_size);
-      kern.to_pids[i] = -1;
-      kern.buffers[i][0] = ' ';
-      release(&kern.lock);
-      release(&lock);
-      // cprintf("Exit recv : %d, %s\n", i, ch);
-      return 0;
+
+  while(1){
+    acquire(&kern.lock);
+    acquire(&lock);
+    for(i = 0; i < num_message_buffers; i++){
+      if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
+        // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+        memmove(ch, kern.buffers[i], message_size);
+        kern.to_pids[i] = -1;
+        kern.buffers[i][0] = ' ';
+        release(&kern.lock);
+        release(&lock);
+        // cprintf("Exit recv : %d, %s\n", i, ch);
+        return 0;
+      }
     }
+    release(&lock);
+    // Put myself in wait queue if no message
+    kern.wait_queue[me] = 1;
+    // Sleep me
+    // cprintf("Sleeping %d\n", me);
+    sleep((void*)me, &kern.lock);
+    release(&kern.lock);
   }
-  // Put myself in wait queue if no message
-  kern.wait_queue[me] = 1;
-  argptr(0, &kern.wait_buffer[me], 4);
-  // Sleep me
-  cprintf("Sleeping %d\n", me);
-  release(&lock);
-  sleep((void*)me, &kern.lock);
-  release(&kern.lock);
   return 0;
 }
 
@@ -256,7 +253,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
   acquire(&lock);
   int result = 0;
   for(int t = 0; t < num; t++){
-    cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    // cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
     result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
