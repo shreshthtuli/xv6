@@ -8,4 +8,4 @@ extern char* syscallnames[];
 
 extern int num_sys_calls;
 
-extern int* syscallcounts[];
+extern int syscallcounts[];

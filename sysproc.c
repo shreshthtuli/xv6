@@ -117,7 +117,8 @@ int
 sys_print_count(void)
 {
   for(uint i = 0; i < num_sys_calls; i++){
-    cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
+    if(syscallcounts[i] > 0)
+      cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
   }
   return 0;
 }
@@ -130,7 +131,7 @@ sys_toggle(void)
   // MOD-1 : Reset all counts
   if(trace == 1){
     for(uint i = 0; i < num_sys_calls; i++){
-      syscallcounts[i] = 0;
+      syscallcounts[i] = 0; 
     }
   }
   return 0;
@@ -183,8 +184,8 @@ sys_send(int sender_pid, int rec_pid, void *msg)
       kern.to_pids[i] = rec_pid;
       if(kern.wait_queue[rec_pid] == 1){
         // The receiver is waiting already
-        cprintf("Sender came second %d\n", rec_pid);
-        cprintf("Waking up %d\n", rec_pid);
+        // cprintf("Sender came second %d\n", rec_pid);
+        // cprintf("Waking up %d\n", rec_pid);
         // Remove from wait queue
         kern.wait_queue[rec_pid] = 0;
         // Wakeup reciever
@@ -209,13 +210,12 @@ sys_recv(void *msg)
   int me = myproc()->pid;
   int i = 0;
 
-  cprintf("Entered recv\n");
   while(1){
     acquire(&kern.lock);
     acquire(&lock);
     for(i = 0; i < num_message_buffers; i++){
       if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
-        cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+        // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
         memmove(ch, kern.buffers[i], message_size);
         kern.to_pids[i] = -1;
         kern.buffers[i][0] = ' ';
@@ -229,7 +229,7 @@ sys_recv(void *msg)
     // Put myself in wait queue if no message
     kern.wait_queue[me] = 1;
     // Sleep me
-    cprintf("Sleeping %d\n", me);
+    // cprintf("Sleeping %d\n", me);
     sleep((void*)me, &kern.lock);
     release(&kern.lock);
   }
@@ -253,7 +253,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
   acquire(&lock);
   int result = 0;
   for(int t = 0; t < num; t++){
-    cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    // cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
     result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
