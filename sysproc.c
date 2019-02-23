@@ -167,6 +167,33 @@ sys_dps(void)
   return 0;
 }
 
+// MOD-1 : System call to shutdown machine
+int
+sys_shutdown(void)
+{
+  outb(0xf4, 0x00);
+  return 0;
+}
+
+// MOD-1 : System call to count CPU time of a pid
+int scheds, pid_to_count, count;
+int
+sys_start_timer(int pid) 
+{
+  scheds = 0;
+  pid_to_count = pid;
+  count = 1;
+  return 0;
+}
+
+// MOD-1 : System call to count CPU time of a pid
+int
+sys_end_timer(int pid) 
+{
+  count = 0;
+  return scheds * 10; // Returns number of milliseconds as 1 jiffy = 10ms
+}
+
 // MOD-1 : System call to send message of 8 bytes
 struct spinlock lock;
 int wakeup_process(int);

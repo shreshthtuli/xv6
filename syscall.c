@@ -115,6 +115,9 @@ extern int sys_recv(void);
 extern int sys_send_multi(void);
 extern int sys_sigset(void);
 extern int sys_sigret(void);
+extern int sys_shutdown(void);
+extern int sys_start_timer(void);
+extern int sys_end_timer(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -149,6 +152,9 @@ static int (*syscalls[])(void) = {
 [SYS_send_multi] sys_send_multi,
 [SYS_sigset]  sys_sigset,
 [SYS_sigret]  sys_sigret,
+[SYS_shutdown] sys_shutdown,
+[SYS_start_timer] sys_start_timer,
+[SYS_end_timer] sys_end_timer,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -186,6 +192,9 @@ char* syscallnames[] = {
     "sys_send_multi",
     "sys_sigset",
     "sys_sigret",
+    "sys_shutdown",
+    "sys_start_timer",
+    "sys_end_timer",
 };
 
 int num_sys_calls = NELEM(syscallnames);

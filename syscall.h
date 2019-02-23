@@ -31,3 +31,6 @@
 #define SYS_send_multi 29
 #define SYS_sigset 30
 #define SYS_sigret 31
+#define SYS_shutdown 32
+#define SYS_start_timer 33
+#define SYS_end_timer 34

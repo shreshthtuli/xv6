@@ -1,5 +1,12 @@
 #define message_size 8
 
+// MOD-1 : time comand
+extern int scheds;
+
+extern int count;
+
+extern int pid_to_count;
+
 typedef void (* sig_handler) (char* msg);
 
 // Per-CPU state

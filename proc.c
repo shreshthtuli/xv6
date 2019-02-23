@@ -7,6 +7,10 @@
 #include "proc.h"
 #include "spinlock.h"
 
+int scheds = 0;
+int pid_to_count = -1;
+int count = 0;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -357,6 +361,9 @@ scheduler(void)
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
+
+      if(count == 1 && p->pid == pid_to_count)
+        scheds += 1; 
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
