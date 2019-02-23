@@ -127,9 +127,12 @@ sys_print_count(void)
 int
 sys_toggle(void)
 {
-  trace = 1 - trace;
+  if(trace == TRACE_ON)
+    trace = TRACE_OFF;
+  else
+    trace = TRACE_ON;
   // MOD-1 : Reset all counts
-  if(trace == 1){
+  if(trace == TRACE_ON){
     for(uint i = 0; i < num_sys_calls; i++){
       syscallcounts[i] = 0; 
     }

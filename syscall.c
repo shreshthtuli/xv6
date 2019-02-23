@@ -152,7 +152,7 @@ static int (*syscalls[])(void) = {
 };
 
 // MOD-1 : Definitions of external variables here
-int trace = 0;
+enum trace_state trace = TRACE_OFF;
 
 char* syscallnames[] = {
     "sys_fork",
@@ -201,7 +201,7 @@ syscall(void)
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // MOD-1 : Increment syscall counts if trace is on
-    if(trace == 1){
+    if(trace == TRACE_ON){
       syscallcounts[num-1] = syscallcounts[num-1] + 1;
     }
     // MOD-1 : Print syscall
