@@ -2,10 +2,10 @@
 #include "types.h"
 #include "stat.h"
 
-extern int trace;
+enum trace_state {TRACE_OFF, TRACE_ON} trace;
 
 extern char* syscallnames[];
 
 extern int num_sys_calls;
 
-extern int* syscallcounts[];
+extern int syscallcounts[];

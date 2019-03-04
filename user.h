@@ -32,9 +32,12 @@ int ps(void);
 int dps(void); // Extra
 int send(int, int, void*);
 int recv(void*);
-int send_multi(int, int*, void*);
+int send_multi(int, int*, void*, int);
 int sigset(sig_handler);
 int sigret(void);
+int shutdown(void); // Extra
+int start_timer(int); // Extra
+int end_timer(int); // Extra
 
 // ulib.c
 int stat(const char*, struct stat*);

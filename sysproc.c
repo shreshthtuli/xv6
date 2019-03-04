@@ -19,12 +19,14 @@ typedef struct{
   char buffers[num_message_buffers][8];
   int from_pids[num_message_buffers];
   int to_pids[num_message_buffers];
+  int wait_queue[NPROC];
 } kernel_buffers;
 
 kernel_buffers kern = {
   .buffers = { "        " },
-  .from_pids = { -1 },
-  .to_pids = { -1 }
+  .from_pids = { 0 },
+  .to_pids = { 0 },
+  .wait_queue = { 0 }
 };
 
 int
@@ -115,7 +117,8 @@ int
 sys_print_count(void)
 {
   for(uint i = 0; i < num_sys_calls; i++){
-    cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
+    if(syscallcounts[i] > 0)
+      cprintf("%s %d\n", syscallnames[i], syscallcounts[i]);
   }
   return 0;
 }
@@ -124,11 +127,14 @@ sys_print_count(void)
 int
 sys_toggle(void)
 {
-  trace = 1 - trace;
+  if(trace == TRACE_ON)
+    trace = TRACE_OFF;
+  else
+    trace = TRACE_ON;
   // MOD-1 : Reset all counts
-  if(trace == 1){
+  if(trace == TRACE_ON){
     for(uint i = 0; i < num_sys_calls; i++){
-      syscallcounts[i] = 0;
+      syscallcounts[i] = 0; 
     }
   }
   return 0;
@@ -161,6 +167,33 @@ sys_dps(void)
   return 0;
 }
 
+// MOD-1 : System call to shutdown machine
+int
+sys_shutdown(void)
+{
+  outb(0xf4, 0x00);
+  return 0;
+}
+
+// MOD-1 : System call to count CPU time of a pid
+int scheds, pid_to_count, count;
+int
+sys_start_timer(int pid) 
+{
+  scheds = 0;
+  pid_to_count = pid;
+  count = 1;
+  return 0;
+}
+
+// MOD-1 : System call to count CPU time of a pid
+int
+sys_end_timer(int pid) 
+{
+  count = 0;
+  return scheds * 10; // Returns number of milliseconds as 1 jiffy = 10ms
+}
+
 // MOD-1 : System call to send message of 8 bytes
 struct spinlock lock;
 int wakeup_process(int);
@@ -173,22 +206,28 @@ sys_send(int sender_pid, int rec_pid, void *msg)
   argint(1, &rec_pid);
   argptr(2, &ch, message_size);
   acquire(&kern.lock);
+  acquire(&lock);
   for(int i = 0; i < num_message_buffers; i++){
-    if(kern.to_pids[i] == -1){
-      // cprintf("Enter send\n");
-      acquire(&lock);
+    if(kern.to_pids[i] <= 0){        
       memmove(kern.buffers[i], ch, message_size);
       kern.from_pids[i] = sender_pid;
       kern.to_pids[i] = rec_pid;
-      release(&kern.lock);
+      if(kern.wait_queue[rec_pid] == 1){
+        // The receiver is waiting already
+        // cprintf("Sender came second %d\n", rec_pid);
+        // cprintf("Waking up %d\n", rec_pid);
+        // Remove from wait queue
+        kern.wait_queue[rec_pid] = 0;
+        // Wakeup reciever
+        wakeup((void*)rec_pid);
+      }
       release(&lock);
-      // cprintf("Waking up %d\n", rec_pid);
-      // wakeup_process(rec_pid);
-      // cprintf("Exit send : %s\n", buffers[i]);
+      release(&kern.lock);
       return 0;
-    }    
+    }
   }
   release(&kern.lock);
+  release(&lock);
   return -1;
 }
 
@@ -200,51 +239,56 @@ sys_recv(void *msg)
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
   int i = 0;
-  // while(1){
+
+  while(1){
+    acquire(&kern.lock);
+    acquire(&lock);
     for(i = 0; i < num_message_buffers; i++){
       if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
-        acquire(&kern.lock);
-        acquire(&lock);
-        cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+        // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
         memmove(ch, kern.buffers[i], message_size);
         kern.to_pids[i] = -1;
         kern.buffers[i][0] = ' ';
         release(&kern.lock);
         release(&lock);
-        cprintf("Exit recv : %d\n", i);
+        // cprintf("Exit recv : %d, %s\n", i, ch);
         return 0;
       }
     }
-    // sleep_process(me);
-  // }
-  return -1;
+    release(&lock);
+    // Put myself in wait queue if no message
+    kern.wait_queue[me] = 1;
+    // Sleep me
+    // cprintf("Sleeping %d\n", me);
+    sleep((void*)me, &kern.lock);
+    release(&kern.lock);
+  }
+  return 0;
 }
 
 
 // MOD-1 : System call to send message in multi-cast
 int sigsend(int dest_pid, char* msg);
 int
-sys_send_multi(int sender_pid, int rec_pids[], void *msg)
+sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
 {
   int* pid;
   char* ch;
+  int num;
   argint(0, &sender_pid);
   argptr(1, (char**)&pid, 64);
   argptr(2, &ch, message_size);
+  argint(3, &num);
   acquire(&kern.lock);
   acquire(&lock);
   int result = 0;
-  for(int t = 0; t < 64; t++){
-    int to = *pid;
-    if(to <= 0 || to > 64)
-      break;
-    cprintf("Msg %s sent to pid : %d\n", ch, *pid);
-    result = sigsend(to, ch);
-    pid += 1;
+  for(int t = 0; t < num; t++){
+    // cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
       release(&lock);
-      return -1;
+      return -1; // Return error
     }
   }
   release(&kern.lock);
@@ -259,8 +303,8 @@ sys_sigset(sig_handler func)
 {
   int sighandler;
   argint(0, &sighandler);
-  sigset((sig_handler) sighandler);
-  return 1;
+  myproc()->sig_handler = (sig_handler) sighandler;
+  return 0;
 }
 
 // MOD-1 : Syscall for returning from trap

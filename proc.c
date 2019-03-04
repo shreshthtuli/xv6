@@ -7,6 +7,10 @@
 #include "proc.h"
 #include "spinlock.h"
 
+int scheds = 0;
+int pid_to_count = -1;
+int count = 0;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -358,6 +362,9 @@ scheduler(void)
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
+      if(count == 1 && p->pid == pid_to_count)
+        scheds += 1; 
+
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
@@ -582,37 +589,6 @@ process_status(void)
   release(&ptable.lock);
 }
 
-// MOD-1 : Wakeup sleeping process
-int
-wakeup_process(int pid)
-{
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if (p->pid == pid) {
-      p->state = RUNNABLE;
-    }
-  }
-  release(&ptable.lock);
-  return 0;
-}
-
-// MOD-1 : Sleep process
-int
-sleep_process(int pid)
-{
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if (p->pid == pid) {
-      p->state = SLEEPING;
-    }
-  }
-  sched();
-  release(&ptable.lock);
-  return 0;
-}
-
 // MOD-1 : System call for send in multi-cast
 int
 sigsend(int dest_pid, char* msg)
@@ -636,17 +612,6 @@ sigsend(int dest_pid, char* msg)
   return -1;
 }
 
-// MOD-1 : System call for setting signal handler
-int
-sigset(sig_handler new_sighandler)
-{
-  // cprintf("Entered sigset\n");
-  struct proc *p = myproc();
-  p->sig_handler = new_sighandler;
-  // cprintf("Exiting sigset from pid %d\n", p->pid);
-  return 0;
-}
-
 // MOD-1 : Return from trap
 void
 sigret(void)
@@ -656,19 +621,6 @@ sigret(void)
   p->disableSignals = 0; // enable handling next pending signal
 }
 
-int myAtoi(char *str) 
-{ 
-    int res = 0; // Initialize result 
-   
-    // Iterate through all characters of input string and 
-    // update result 
-    for (int i = 0; str[i] != '\0'; ++i) 
-        res = res*10 + str[i] - '0'; 
-   
-    // return result. 
-    return res; 
-} 
-
 // MOD-1 : Check signals pending
 void checkSignals(struct trapframe *tf)
 { 
@@ -676,11 +628,7 @@ void checkSignals(struct trapframe *tf)
     return;
   struct proc *p = myproc();
   acquire(&ptable.lock);
-  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1){
-    release(&ptable.lock);
-    return;
-  }
-  if (*p->msg == -1 || p->interrupt != 1){
+  if(p == 0 || p->disableSignals == 1 || p->sig_handler == (sig_handler)-1 || *p->msg == -1 || p->interrupt != 1){
     release(&ptable.lock);
     return;
   }
@@ -690,12 +638,11 @@ void checkSignals(struct trapframe *tf)
   p->tf->esp -= (uint)&invoke_sigret_end - (uint)&invoke_sigret_start;
   memmove((void*)p->tf->esp, invoke_sigret_start, (uint)&invoke_sigret_end - (uint)&invoke_sigret_start);
   // cprintf("Printing check signal %s\n", p->msg);
-  int temp = myAtoi(p->msg);
-  // cprintf("Printing check signal %d\n", temp); // BAD WAY OF DOING THIS
-  *((int*)(p->tf->esp - 4)) = temp;
+  // cprintf("Printing check signal %d\n", (int)&p->msg); 
+  memmove(((char*)(p->tf->esp - 4)), p->msg, MSGSIZE);
   *((int*)(p->tf->esp - 8)) = p->tf->esp; // sigret system call code address
   p->tf->esp -= 8;
-  p->tf->eip = (uint)p->sig_handler; // trapret will resume into signal handler
-  *p->msg = -1;
+  p->tf->eip = (uint)p->sig_handler; // resume from signal handler
+  *p->msg = -1; // reset process message
   release(&ptable.lock);
 }
