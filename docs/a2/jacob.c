@@ -1,6 +1,6 @@
 #include<math.h>
 #include<stdio.h>
-#define N 100
+#define N 10
 #define EPSILON 0.01
 int main(int argc, char *argv[])
 {
@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 	int count;
 	
 	mean = 0.0;
+	// Can parallelise this - barrier to ensure all means are done
 	for (i = 0; i < N; i++){
 		u[i][0] = u[i][N-1] = u[0][i] = 100.0;
 		u[N-1][i] = 0.0;
@@ -20,6 +21,7 @@ int main(int argc, char *argv[])
 	mean /= (4.0 * N);
 	for (i = 1; i < N-1; i++ )
 		for ( j= 1; j < N-1; j++) u[i][j] = mean;
+	// Can parallelise this - get each diff and take min, take each count and add
 	for(;;){
 		diff = 0.0;
 		for(i =1 ; i < N-1; i++)
