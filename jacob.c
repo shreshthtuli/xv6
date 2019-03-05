@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 	mean /= (4.0 * N);
 	printf(1, "Mean : ");
 	printfloat(1, mean);
+	printf(1, "\n");
 	for (i = 1; i < N-1; i++ )
 		for ( j= 1; j < N-1; j++) u[i][j] = mean;
 	// Can parallelise this - get each diff and take min, take each count and add
