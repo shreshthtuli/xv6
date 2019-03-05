@@ -21,7 +21,7 @@ void signal_handler(int mean)
 {
     int count = 0; // Count of each
 	double diff;
-	int w[N][N];
+	double w[N][N];
 	printf(1, "Child proc %d with num %d got mean %d\n", getpid(), num, mean);
     // Parallelised this - each diff < epsilon should be true
 	for(int i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++)
@@ -40,13 +40,16 @@ void signal_handler(int mean)
         for(int i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++)
             for (j =1; j< N-1; j++) u[i][j] = w[i][j];
     }
-	sleep(5*num);
 
 	send(getpid(), parent_pid, &count);
     barrier();
+	printf(1, "check1 pid %d\n", getpid());
 	recv(&count);
+	printf(1, "check2");
 	for(int i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
 		for(j = 0; j<N; j++){
+			int a = u[i][j];
+			send(getpid(), parent_pid, &a);
 			printfloat(1,u[i][j]);
 			printf(1, ",");
 		}
@@ -66,6 +69,7 @@ int main(int argc, char *argv[])
 	int child_pids[procs];
 	
 	mean = 0.0;
+	int start = uptime();
 
 	parent_pid = getpid();
 	int child_flag = 1;
@@ -126,9 +130,6 @@ int main(int argc, char *argv[])
         // Initialise another barrier for next computation
         barrier_init(procs + 1);
 
-		printf(1, "master pid = %d, work sent to pids : %d, %d\n", getpid(),child_pids[0], child_pids[1]);
-		// child_pids[0] = 4;
-
 		int mean_send = (int)mean;
         send_multi(parent_pid, child_pids, &mean_send, procs);
 
@@ -136,28 +137,30 @@ int main(int argc, char *argv[])
         barrier();
 
         count = 0;
+		int a = 0;
         // Get counts
-        for(int i = 0; i < procs; i++){
+        for(int num = 0; num < procs; num++){
 			recv(&temp);
-			send(parent_pid, child_pids[i], &count);
-			wait();
+			printf(1, "Recd count %d\n", temp);
 			count += temp;
-			// printf(1, "Got count %d from %d so total = %d\n", temp, i, total);
 		}
 
-		mean = 0.0;
-		// Can parallelise this - barrier to ensure all means are done
-		for (i = 0; i < N; i++){
-			u[i][0] = u[i][N-1] = u[0][i] = 100.0;
-			u[N-1][i] = 0.0;
-			mean += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
+		int to = 0;
+		for(int num = 0; num < procs; num++){
+			to = child_pids[num];
+			send(parent_pid, to, &count);
+			printf(1, "Send to pid %d\n", child_pids[num]);
+			// Get matrices from child procs
+			for(int i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
+				for(j = 0; j<N; j++){
+					recv(&a);
+					printf(1, "Recd (%d, %d) %d\n", i, j, a);
+					u[i][j] = a;
+				}
+			}
+			wait();
 		}
-		mean /= (4.0 * N);
-		printf(1, "Mean : ");
-		printfloat(1, mean);
-		printf(1, "\n");
-		for (i = 1; i < N-1; i++ )
-			for ( j= 1; j < N-1; j++) u[i][j] = mean;
+
 		// Continue from where child procs left
 		for(;;){
 			diff = 0.0;
@@ -183,5 +186,6 @@ int main(int argc, char *argv[])
 	}
 
 	printf(1, "\nNumber of iteration: %d\n",count);
+	printf(1, "Time = %d Ticks\n", uptime() - start); 
 
 }

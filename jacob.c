@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
 	double w[N][N];
 	int count = 0;
 	
+	int start = uptime();
+
 	mean = 0.0;
 	// Can parallelise this - barrier to ensure all means are done
 	for (i = 0; i < N; i++){
@@ -52,5 +54,7 @@ int main(int argc, char *argv[])
 		printf(1,"\n");
 	}
 	printf(1, "\nNumber of iteration: %d\n",count);
+
+	printf(1, "Time = %d Ticks\n", uptime() - start); 
 
 }

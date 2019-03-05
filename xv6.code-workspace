@@ -22,7 +22,9 @@
             "mkfs": true
         },
         "files.associations": {
-            "syscall_trace.h": "c"
+            "syscall_trace.h": "c",
+            "user.h": "c",
+            "stat.h": "c"
         }
     }
 }
