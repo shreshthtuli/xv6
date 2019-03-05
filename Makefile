@@ -188,7 +188,9 @@ UPROGS=\
 	_user_ps\
 	_shutdown\
 	_time\
+	_barrier_test\
 	_jacob\
+	_jacob_par\
 
 fs.img: mkfs README arr $(UPROGS)
 	./mkfs fs.img README arr $(UPROGS)
@@ -256,7 +258,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	jacob.c\
+	barrier_test.c jacob.c jacob_par.c\
 	shutdown.c time.c\
 	distributed.c user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\

@@ -118,6 +118,9 @@ extern int sys_sigret(void);
 extern int sys_shutdown(void);
 extern int sys_start_timer(void);
 extern int sys_end_timer(void);
+// MOD-2 : Barrier syscalls
+extern int sys_barrier_init(void);
+extern int sys_barrier(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -155,6 +158,9 @@ static int (*syscalls[])(void) = {
 [SYS_shutdown] sys_shutdown,
 [SYS_start_timer] sys_start_timer,
 [SYS_end_timer] sys_end_timer,
+// MOD-2 : Barrier syscalls
+[SYS_barrier_init] sys_barrier_init,
+[SYS_barrier] sys_barrier,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -195,6 +201,8 @@ char* syscallnames[] = {
     "sys_shutdown",
     "sys_start_timer",
     "sys_end_timer",
+    "sys_barrier_init",
+    "sys_barrier"
 };
 
 int num_sys_calls = NELEM(syscallnames);

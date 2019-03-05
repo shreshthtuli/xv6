@@ -29,6 +29,19 @@ kernel_buffers kern = {
   .wait_queue = { 0 }
 };
 
+typedef struct{
+  struct spinlock lock;
+  int num_procs;
+  int arrived;
+  int pids[NPROC];
+} kernel_barrier;
+
+kernel_barrier bar = {
+  .num_procs = 0,
+  .arrived = 0,
+  .pids = { 0 }
+};
+
 int
 sys_fork(void)
 {
@@ -283,7 +296,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
   acquire(&lock);
   int result = 0;
   for(int t = 0; t < num; t++){
-    // cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
     result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
@@ -313,5 +326,40 @@ int
 sys_sigret(void)
 {
   sigret();
+  return 0;
+}
+
+
+// MOD-2 : Syscall for barrier init
+int
+sys_barrier_init(int procs)
+{
+  argint(0, &procs);
+  acquire(&bar.lock);
+  bar.num_procs = procs;
+  bar.arrived = 0;
+  release(&bar.lock);
+  return 0;
+}
+
+// MOD-2 : Syscall for barrier reached
+int
+sys_barrier(void)
+{
+  acquire(&bar.lock);
+  bar.arrived ++;
+  cprintf("ArrivedProc = %d, ArrivedTotal = %d\n", myproc()->pid, bar.arrived);
+  if(bar.arrived < bar.num_procs){ 
+    // Add my pid for wakeup later
+    bar.pids[bar.arrived - 1] = myproc()->pid;
+    // More to arrive so sleep me
+    sleep((void*)myproc()->pid, &bar.lock);
+  }
+  else{
+    // All procs done so wakeup all
+    for(int i = 0; i < bar.num_procs; i++)
+      wakeup((void*)bar.pids[i]);
+  }
+  release(&bar.lock);
   return 0;
 }

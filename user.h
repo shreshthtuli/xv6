@@ -38,6 +38,9 @@ int sigret(void);
 int shutdown(void); // Extra
 int start_timer(int); // Extra
 int end_timer(int); // Extra
+// MOD-2
+int barrier_init(int);
+int barrier(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
