@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "fcntl.h"
 
 #define fabs(a) (a>=0) ? a : -a
 
@@ -20,14 +21,14 @@ void signal_handler(int mean)
 {
     int count = 0; // Count of each
 	double diff;
-	double w[N][N];
+	int w[N][N];
 	printf(1, "Child proc %d with num %d got mean %d\n", getpid(), num, mean);
     // Parallelised this - each diff < epsilon should be true
-	for(int i = num*N/procs; i < (num+1)*N/procs; i++)
+	for(int i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++)
 		for ( j= 1; j < N-1; j++) u[i][j] = mean;
     for(;;){
         diff = 0.0;
-        for(int i = num*N/procs; i < (num+1)*N/procs; i++)
+        for(int i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++)
             for(j =1 ; j < N-1; j++){
                 w[i][j] = ( u[i-1][j] + u[i+1][j]+
                         u[i][j-1] + u[i][j+1])/4.0;
@@ -36,30 +37,23 @@ void signal_handler(int mean)
             count++;	
             }
         if(diff <= EPSILON) break;
-        for(int i = num*N/procs; i < (num+1)*N/procs; i++)
+        for(int i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++)
             for (j =1; j< N-1; j++) u[i][j] = w[i][j];
     }
 	sleep(5*num);
-	for(i =0; i <N; i++){
+
+	send(getpid(), parent_pid, &count);
+    barrier();
+	recv(&count);
+	for(int i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
 		for(j = 0; j<N; j++){
-			printfloat(1, u[i][j]);
+			printfloat(1,u[i][j]);
 			printf(1, ",");
 		}
 		printf(1,"\n");
 	}
-
-	double a = 1.0;
-	for(i =0; i <N; i++){
-		for(j = 0; j<N; j++){
-			a = u[i][j];
-			send(getpid(), parent_pid, &a);
-		}
-	}
-    
-    barrier();
-    exit();
+	exit();
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -98,7 +92,7 @@ int main(int argc, char *argv[])
 		sigset((sig_handler)&signal_handler);
 		printf(1, "Child proc %d\n", getpid());
 		int partial_sum = 0;
-		for(int i = num*N/procs; i < (num+1)*N/procs; i++){
+		for(int i = 0; i < N; i++){
 			u[i][0] = u[i][N-1] = u[0][i] = 100.0;
 		    u[N-1][i] = 0.0;
 		    partial_sum += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
@@ -113,6 +107,10 @@ int main(int argc, char *argv[])
     else{
         int total = 0;
 		int temp = 0;
+		for(int i = 0; i < N; i++){
+			u[i][0] = u[i][N-1] = u[0][i] = 100.0;
+		    u[N-1][i] = 0.0;
+		}
         // Make sure all procs are done
         barrier();
 		// Get results
@@ -121,7 +119,7 @@ int main(int argc, char *argv[])
 			total += temp;
 			printf(1, "Got results %d from %d so total = %d\n", temp, i, total);
 		}
-		mean = total / (4 * N);
+		mean = total / (4 * N * procs);
 		printf(1, "Mean : ");
 		printfloat(1, mean);
     	
@@ -129,41 +127,61 @@ int main(int argc, char *argv[])
         barrier_init(procs + 1);
 
 		printf(1, "master pid = %d, work sent to pids : %d, %d\n", getpid(),child_pids[0], child_pids[1]);
-		child_pids[0] = 4;
-        send_multi(parent_pid, child_pids, &mean, procs);
+		// child_pids[0] = 4;
+
+		int mean_send = (int)mean;
+        send_multi(parent_pid, child_pids, &mean_send, procs);
 
         // Wait for all child procs to finish
         barrier();
 
-		double temp2 = 1.0;
+        count = 0;
+        // Get counts
+        for(int i = 0; i < procs; i++){
+			recv(&temp);
+			send(parent_pid, child_pids[i], &count);
+			wait();
+			count += temp;
+			// printf(1, "Got count %d from %d so total = %d\n", temp, i, total);
+		}
 
-		for (i = 1; i < N-1; i++ ){
-		    for ( j= 1; j < N-1; j++) {
-				for(int i = 0; i < procs; i++){
-					recv(&temp2);
-					u[i][j] += temp2;
+		mean = 0.0;
+		// Can parallelise this - barrier to ensure all means are done
+		for (i = 0; i < N; i++){
+			u[i][0] = u[i][N-1] = u[0][i] = 100.0;
+			u[N-1][i] = 0.0;
+			mean += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
+		}
+		mean /= (4.0 * N);
+		printf(1, "Mean : ");
+		printfloat(1, mean);
+		printf(1, "\n");
+		for (i = 1; i < N-1; i++ )
+			for ( j= 1; j < N-1; j++) u[i][j] = mean;
+		// Continue from where child procs left
+		for(;;){
+			diff = 0.0;
+			for(i =1 ; i < N-1; i++)
+				for(j =1 ; j < N-1; j++){
+					w[i][j] = ( u[i-1][j] + u[i+1][j]+
+							u[i][j-1] + u[i][j+1])/4.0;
+					if( fabs(w[i][j] - u[i][j]) > diff )
+						diff = fabs(w[i][j]- u[i][j]);
+				count++;	
 				}
-			}					
+			if(diff <= EPSILON) break;
+			for (i =1; i< N-1; i++)	
+				for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 		}
-
-        // count = 0;
-        // // Get counts
-        // for(int i = 0; i < procs; i++){
-		// 	wait();
-		// 	recv(&temp);
-		// 	count += temp;
-		// 	printf(1, "Got count %d from %d so total = %d\n", temp, i, total);
-		// }
-
-    }
-
-	for(i =0; i <N; i++){
-		for(j = 0; j<N; j++){
-			printfloat(1, u[i][j]);
-			printf(1, ",");
+		for(i =0; i <N; i++){
+			for(j = 0; j<N; j++){
+				printfloat(1, u[i][j]);
+				printf(1, ",");
+			}
+			printf(1,"\n");
 		}
-		printf(1,"\n");
 	}
+
 	printf(1, "\nNumber of iteration: %d\n",count);
 
 }
