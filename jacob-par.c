@@ -6,6 +6,10 @@
 
 #define N 10
 #define EPSILON 0.01
+#define procs 8
+
+int parent_pid;
+int num;
 
 int main(int argc, char *argv[])
 {
@@ -15,8 +19,29 @@ int main(int argc, char *argv[])
 	double u[N][N];
 	double w[N][N];
 	int count = 0;
+	int child_pids[procs];
+	int num;
 	
 	mean = 0.0;
+
+	parent_pid = getpid();
+	int child_flag = 1;
+
+	int pid = -2;
+	for(int i = 0; i < procs; i++){
+		num= i;
+		pid = fork();
+		if (pid != 0)
+			child_pids[i] = pid;
+		else
+			goto child;
+		printf(1, "Init %d\n", pid);
+	}
+
+	child_flag = 0;
+	dps();
+
+	child:
 	// Can parallelise this - barrier to ensure all means are done
 	for (i = 0; i < N; i++){
 		u[i][0] = u[i][N-1] = u[0][i] = 100.0;
