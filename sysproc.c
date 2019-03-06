@@ -11,7 +11,7 @@
 
 #define num_message_buffers 1000
 #define message_size 8
-#define max_queue_elements 50
+#define max_queue_elements 500
 
 typedef void (* sig_handler) (char* msg);
 
