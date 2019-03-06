@@ -11,10 +11,10 @@ int main(int argc, char *argv[])
 	double diff;
 	int i,j;
 	double mean = 0.0;
-	double u[N][N];
-	double w[N][N];
+	float u[20][20];
+	float w[20][20];
 	int count;
-	int procs = 2;
+	int procs = 4;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
 
 	child_flag = 0;
 	num = 0;
-	dps();
 
 	child:
 	if(child_flag == 1){
@@ -73,7 +72,7 @@ int main(int argc, char *argv[])
 		next = proc_pids[1];
 	}
 
-	double diff_next = 0, diff_prev = 0;
+	double diff_temp = 0;
 
 	// Parallelised jacobi method
 	for(;;){
@@ -91,28 +90,39 @@ int main(int argc, char *argv[])
 		if(num != procs-1){
 			for(j = 1; j < N; j++)
 				send(proc_pids[num], next, &u[(num+1)*(N-2)/procs][j]);
-			send(proc_pids[num], next, &diff);
 		}
 		
 		if(num != 0){
 			for(j = 1; j < N; j++)
 				recv(&u[num*(N-2)/procs][j]);
-			recv(&diff_prev);
 		}
 		
 		if(num != 0){
 			for(j = 1; j < N; j++)
 				send(proc_pids[num], prev, &u[num*(N-2)/procs + 1][j]);
-			send(proc_pids[num], prev, &diff);
 		}
 		
 		if(num != procs-1){
 			for(j = 1; j < N; j++)
 				recv(&u[(num+1)*(N-2)/procs + 1][j]);
-			recv(&diff_next);
 		}
 
-		if(diff + diff_next + diff_prev <= EPSILON) break;
+		// Send difference
+		if(num != 0){
+			send(proc_pids[num], proc_pids[0], &diff);
+			recv(&diff);
+		}
+		else{
+			for(j = 1; j < procs; j++){
+				recv(&diff_temp);
+				if(diff_temp > diff)
+					diff = diff_temp;
+			}
+			for(j = 1; j < procs; j++)
+				send(proc_pids[0], proc_pids[j], &diff);
+		}
+
+		if(diff <= EPSILON) break;
 		for (i =1; i< N-1; i++)	
 			for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 	}
@@ -121,8 +131,7 @@ int main(int argc, char *argv[])
 	if(num == 0){
 		for(i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
 			for(j = 0; j<N; j++){
-				printfloat(1, u[i][j]);
-				printf(1, ",");
+				printf(1, "%d,", (int)u[i][j]);
 			}
 			printf(1,"\n");
 		}
@@ -142,8 +151,7 @@ int main(int argc, char *argv[])
 		recv(&next);
 		for(i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
 			for(j = 0; j<N; j++){
-				printfloat(1, u[i][j]);
-				printf(1, ",");
+				printf(1, "%d,", (int)u[i][j]);
 			}
 			printf(1,"\n");
 		}

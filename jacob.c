@@ -48,8 +48,7 @@ int main(int argc, char *argv[])
 	}
 	for(i =0; i <N; i++){
 		for(j = 0; j<N; j++){
-			printfloat(1, u[i][j]);
-			printf(1, ",");
+			printf(1, "%d,", (int)u[i][j]);
 		}
 		printf(1,"\n");
 	}
