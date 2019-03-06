@@ -11,6 +11,7 @@
 
 #define num_message_buffers 1000
 #define message_size 8
+#define max_queue_elements 50
 
 typedef void (* sig_handler) (char* msg);
 
@@ -19,6 +20,9 @@ typedef struct{
   char buffers[num_message_buffers][8];
   int from_pids[num_message_buffers];
   int to_pids[num_message_buffers];
+  int queue[NPROC][max_queue_elements];
+  int head[NPROC];
+  int tail[NPROC];
   int wait_queue[NPROC];
 } kernel_buffers;
 
@@ -26,8 +30,26 @@ kernel_buffers kern = {
   .buffers = { "        " },
   .from_pids = { 0 },
   .to_pids = { 0 },
+  .head = { 0 },
+  .tail = { 0 },
+  .queue = {{ 0 }},
   .wait_queue = { 0 }
 };
+
+void enque(int pid, int index)
+{
+  kern.queue[pid][kern.tail[pid]] = index;
+  kern.tail[pid] += 1 % max_queue_elements;
+}
+
+int deque(int pid)
+{
+  if(kern.head[pid] == kern.tail[pid])
+    return -1; // Empty queue
+  int result = kern.queue[pid][kern.head[pid]];
+  kern.head[pid] += 1 % max_queue_elements;
+  return result;
+}
 
 typedef struct{
   struct spinlock lock;
@@ -225,6 +247,7 @@ sys_send(int sender_pid, int rec_pid, void *msg)
       memmove(kern.buffers[i], ch, message_size);
       kern.from_pids[i] = sender_pid;
       kern.to_pids[i] = rec_pid;
+      enque(rec_pid, i);
       if(kern.wait_queue[rec_pid] == 1){
         // The receiver is waiting already
         // cprintf("Sender came second %d\n", rec_pid);
@@ -251,22 +274,21 @@ sys_recv(void *msg)
   char* ch;
   argptr(0, &ch, message_size);
   int me = myproc()->pid;
-  int i = 0;
+  int val;
 
   while(1){
     acquire(&kern.lock);
     acquire(&lock);
-    for(i = 0; i < num_message_buffers; i++){
-      if(kern.to_pids[i] == me && kern.buffers[i][0] != ' '){
-        // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
-        memmove(ch, kern.buffers[i], message_size);
-        kern.to_pids[i] = -1;
-        kern.buffers[i][0] = ' ';
-        release(&kern.lock);
-        release(&lock);
-        // cprintf("Exit recv : %d, %s\n", i, ch);
-        return 0;
-      }
+    val = deque(me);
+    if(val != -1){
+      // cprintf("Enter recv pid : %d : topid %d\n", me, kern.to_pids[i]);
+      memmove(ch, kern.buffers[val], message_size);
+      kern.to_pids[val] = -1;
+      kern.buffers[val][0] = ' ';
+      release(&kern.lock);
+      release(&lock);
+      // cprintf("Exit recv : %d, %s\n", i, ch);
+      return 0;
     }
     release(&lock);
     // Put myself in wait queue if no message
