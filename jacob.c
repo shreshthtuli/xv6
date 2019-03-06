@@ -2,18 +2,22 @@
 #include "stat.h"
 #include "user.h"
 
-#define fabs(a) (a>=0) ? a : -a
-
 #define N 10
 #define EPSILON 0.01
+
+double fabs(double a){
+	if(a > 0)
+		return a;
+	return -a;
+}
 
 int main(int argc, char *argv[])
 {
 	double diff;
 	int i,j;
 	double mean;
-	double u[N][N];
-	double w[N][N];
+	float u[N][N];
+	float w[N][N];
 	int count = 0;
 	
 	int start = uptime();

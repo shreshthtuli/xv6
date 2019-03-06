@@ -2,9 +2,14 @@
 #include "stat.h"
 #include "user.h"
 
-#define fabs(a) (a>=0) ? a : -a
 #define N 10
 #define EPSILON 0.01
+
+double fabs(double a){
+	if(a > 0)
+		return a;
+	return -a;
+}
 
 int main(int argc, char *argv[])
 {
@@ -14,7 +19,7 @@ int main(int argc, char *argv[])
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 4;
+	int procs = 2;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -49,7 +54,7 @@ int main(int argc, char *argv[])
 			proc_pids[i] = pid;
 		else
 			goto child;
-		printf(1, "Init proc %d with pid %d\n", i, proc_pids[i]);
+		// printf(1, "Init proc %d with pid %d\n", i, proc_pids[i]);
 	}
 
 	child_flag = 0;
@@ -65,46 +70,45 @@ int main(int argc, char *argv[])
 	}
 	else{
 		// Master sends the next proc pid
-		for(int i = 1; i < procs-1; i++){
+		for(int i = 1; i < procs-1; i++)
 			send(proc_pids[0], proc_pids[i], &proc_pids[i+1]);
-		}
+		
 		// For master next = proc_pids[1]
 		next = proc_pids[1];
 	}
 
 	double diff_temp = 0;
+	int first = num*(N-2)/procs + 1, last = (num+1)*(N-2)/procs;
+	printf(1, "Proc %d first %d last %d\n", proc_pids[num], first, last);
 
 	// Parallelised jacobi method
 	for(;;){
 		diff = 0.0;
+		// Share border results with next and prev
+		if(num != procs-1)
+			for(j = 1; j < N; j++)
+				send(proc_pids[num], next, &u[last][j]);
+		
+		if(num != 0)
+			for(j = 1; j < N; j++)
+				recv(&u[first - 1][j]);
+	
+		if(num != 0)
+			for(j = 1; j < N; j++)
+				send(proc_pids[num], prev, &u[first][j]);
+		
+		if(num != procs-1)
+			for(j = 1; j < N; j++)
+				recv(&u[last + 1][j]);
+
 		// Compute jacobi for submatrix
-		for(i = num*(N-2)/procs + 1; i < (num+1)*(N-2)/procs + 1; i++){
+		for(i = first; i <= last; i++){
 			for(j =1 ; j < N-1; j++){
 				w[i][j] = ( u[i-1][j] + u[i+1][j] + u[i][j-1] + u[i][j+1])/4.0;
 				if( fabs(w[i][j] - u[i][j]) > diff )
-					diff = fabs(w[i][j]- u[i][j]);
+					diff = 10 * fabs(w[i][j] - u[i][j]);
 				count++;	
 			}
-		}
-		// Share border results with next and prev
-		if(num != procs-1){
-			for(j = 1; j < N; j++)
-				send(proc_pids[num], next, &u[(num+1)*(N-2)/procs][j]);
-		}
-		
-		if(num != 0){
-			for(j = 1; j < N; j++)
-				recv(&u[num*(N-2)/procs][j]);
-		}
-		
-		if(num != 0){
-			for(j = 1; j < N; j++)
-				send(proc_pids[num], prev, &u[num*(N-2)/procs + 1][j]);
-		}
-		
-		if(num != procs-1){
-			for(j = 1; j < N; j++)
-				recv(&u[(num+1)*(N-2)/procs + 1][j]);
 		}
 
 		// Send difference
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
 			for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 	}
 	
-	// Master prints the matrix
+	// Printing matrix
 	if(num == 0){
 		for(i = num*(N)/procs; i < (num+1)*(N)/procs; i++){
 			for(j = 0; j<N; j++){
