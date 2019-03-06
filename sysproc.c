@@ -39,7 +39,7 @@ kernel_buffers kern = {
 void enque(int pid, int index)
 {
   kern.queue[pid][kern.tail[pid]] = index;
-  kern.tail[pid] += 1 % max_queue_elements;
+  kern.tail[pid] = (kern.tail[pid] + 1) % max_queue_elements;
 }
 
 int deque(int pid)
@@ -47,7 +47,7 @@ int deque(int pid)
   if(kern.head[pid] == kern.tail[pid])
     return -1; // Empty queue
   int result = kern.queue[pid][kern.head[pid]];
-  kern.head[pid] += 1 % max_queue_elements;
+  kern.head[pid] = (kern.head[pid] + 1) % max_queue_elements;
   return result;
 }
 
@@ -379,6 +379,7 @@ sys_barrier(void)
   }
   else{
     // All procs done so wakeup all
+    bar.arrived = 0;
     for(int i = 0; i < bar.num_procs; i++)
       wakeup((void*)bar.pids[i]);
   }

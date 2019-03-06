@@ -191,6 +191,7 @@ UPROGS=\
 	_barrier_test\
 	_jacob\
 	_jacob_par\
+	_maekawa\
 
 fs.img: mkfs README arr $(UPROGS)
 	./mkfs fs.img README arr $(UPROGS)
@@ -227,7 +228,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 2
+CPUS := 4
 endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA) -display none -device isa-debug-exit,iobase=0xf4,iosize=0x04
 
@@ -258,7 +259,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	barrier_test.c jacob.c jacob_par.c\
+	maekawa.c barrier_test.c jacob.c jacob_par.c\
 	shutdown.c time.c\
 	distributed.c user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\

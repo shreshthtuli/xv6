@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 2;
+	int procs = 4;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 			for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 	}
 
-	printf(1, "Work done by %d\n", proc_pids[num]);
+	// printf(1, "Work done by %d\n", proc_pids[num]);
 	
 	// Printing matrix
 	if(num == 0){
