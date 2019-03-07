@@ -318,7 +318,7 @@ sys_send_multi(int sender_pid, int rec_pids[], void *msg, int len)
   acquire(&lock);
   int result = 0;
   for(int t = 0; t < num; t++){
-    cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
+    // cprintf("Msg %s sent to pid : %d\n", ch, pid[t]);
     result = sigsend(pid[t], ch);
     if(result < 0){
       release(&kern.lock);
@@ -370,7 +370,7 @@ sys_barrier(void)
 {
   acquire(&bar.lock);
   bar.arrived ++;
-  cprintf("ArrivedProc = %d, ArrivedTotal = %d\n", myproc()->pid, bar.arrived);
+  // cprintf("ArrivedProc = %d, ArrivedTotal = %d\n", myproc()->pid, bar.arrived);
   if(bar.arrived < bar.num_procs){ 
     // Add my pid for wakeup later
     bar.pids[bar.arrived - 1] = myproc()->pid;

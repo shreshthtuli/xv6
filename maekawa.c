@@ -4,9 +4,9 @@
 
 #define max_queue_elements 100
 
-#define P 4
+#define P 25
 #define P1 1
-#define P2 2
+#define P2 23
 #define P3 1
 
 typedef struct{
@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
     int size = 0;
     int pid;
     int parent_pid = getpid();
+    int wait_time = 0;
+    int num_procs_done = 0;
     // int set[9];
 
     barrier_init(P);
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
 			goto child;
 	}
 
-	dps();
+	// dps();
 
 	child:
 
@@ -82,17 +84,29 @@ int main(int argc, char *argv[])
                 goto next;
     
     next:
-    printf(1, "Found (%d, %d) as my pid = %d\n", i, j, getpid());
+    // printf(1, "Found (%d, %d) as my pid = %d\n", i, j, getpid());
+
+    if(size*i + j < P1 + P2)
+        wait_time = 2;
 
     // Send request to quorum - msg = my pid
-    for(int x = 0; x < size; x++){
-        for(int y = 0; y < size; y++){
-            if(x == i || y == j){
-                send(getpid(), proc_pids[x][y], &proc_pids[i][j]);
-                printf(1, "Request(%d) to %d\n", getpid(), proc_pids[x][y]);
+    for(int p = 0; p < size; p++){
+        for(int q = 0; q < size; q++){
+            if(p == i && q == j){
+                for(int x = 0; x < size; x++){
+                    for(int y = 0; y < size; y++){
+                        if(x == i || y == j){
+                            send(getpid(), proc_pids[x][y], &proc_pids[i][j]);
+                            // printf(1, "Request(%d) to %d\n", getpid(), proc_pids[x][y]);
+                        }
+                    }
+                }
             }
+            barrier();
+
         }
     }
+
 
     barrier();
 
@@ -100,13 +114,13 @@ int main(int argc, char *argv[])
     int temp;
     recv(&temp);
     send(getpid(), temp, &temp);
-    printf(1, "Reply to(%d) by %d\n", temp, getpid());
+    // printf(1, "Reply to(%d) by %d\n", temp, getpid());
     for(int p = 0; p < 2*size - 2; p++){
         recv(&temp);
         if(temp == -1)
             break;
         enque(temp);
-        printf(1, "Enq %d by %d\n", temp, getpid());
+        // printf(1, "Enq %d by %d\n", temp, getpid());
     }
 
     barrier();
@@ -122,21 +136,28 @@ int main(int argc, char *argv[])
         else if(temp == 100){
             temp = deque();
             send(getpid(), temp, &temp);
-            printf(1, "Reply(%d) by %d\n", temp, getpid());
+            num_procs_done++;
+            // printf(1, "Reply(%d) by %d\n", temp, getpid());
         }
         else{
             enque(temp);
         }
 
-        printf(1, "Pid %d num = %d\n", getpid(), num);
+        // printf(1, "Pid %d num = %d\n", getpid(), num);
         
         if(num == (2*size - 1))
             break;
     }
 
+    if(size*i + j < P1)
+        goto nosend;
+
     // Execute critical section
     printf(1, "%d acquired the lock at time %d\n", getpid(), uptime());
+    sleep(wait_time);
     printf(1, "%d released the lock at time %d\n", getpid(), uptime());
+
+    nosend:
 
     temp = 100; // 100 signifies release
     proc_pids[0][0] = parent_pid;
@@ -146,7 +167,7 @@ int main(int argc, char *argv[])
         for(int y = 0; y < size; y++){
             if(x == i || y == j){
                 send(getpid(), proc_pids[x][y], &temp);
-                printf(1, "Release to %d\n", proc_pids[x][y]);
+                // printf(1, "Release to %d\n", proc_pids[x][y]);
             }
         }
     }
@@ -159,8 +180,18 @@ int main(int argc, char *argv[])
         else if(temp == 100){
             temp = deque();
             send(getpid(), temp, &temp);
+            num_procs_done++;
         }
+        // printf(1, "Numprocs done at %d is %d\n", proc_pids[i][j], num_procs_done);
 
+        if(num_procs_done >= 2*size - 1)
+            break;
+    }
+
+
+    if(getpid() == parent_pid){
+        for(int i = 0; i < P-1; i++)
+            wait(); // wait for all child procs to exit
     }
 	
 	exit();
