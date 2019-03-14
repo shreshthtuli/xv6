@@ -1,14 +1,37 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
+#include <stdio.h> 
+#include <sys/ipc.h> 
+#include <sys/msg.h> 
+#include <math.h>
+#include <stdlib.h>
+#include <time.h> 
 
-#define N 10
-#define EPSILON 0.001
+#define N 20
+#define EPSILON 0.01
 
-double fabs(double a){
-	if(a > 0)
-		return a;
-	return -a;
+int msgids[8] = {0};
+int num;
+
+// structure for message queue 
+struct mesg_buffer { 
+    long mesg_type; 
+    char mesg_text[100]; 
+} message; 
+
+void send(int sender_pid, int receiver_index, float * value)
+{
+    message.mesg_type = 1; 
+    // printf("Sending %f to %d from %d\n", *value, receiver_index, sender_pid);
+    sprintf(message.mesg_text, "%f", *value);
+    int msgid = msgids[receiver_index];
+    msgsnd(msgid, &message, sizeof(message), 0);
+}
+
+void recv(float *value)
+{
+    int msgid = msgids[num];
+    // printf("Got value %f by %d\n", atof(message.mesg_text), getpid());
+    msgrcv(msgid, &message, sizeof(message), 1, 0); 
+    *value = atof(message.mesg_text);
 }
 
 int main(int argc, char *argv[])
@@ -19,17 +42,25 @@ int main(int argc, char *argv[])
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 2;
+	int procs = 8;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
 	int pid = -1;
-	int num;
 	int prev = 0, next = 0;
 	float diff_temp = 0;
 	int first = 0, last = 0;
+    char fname[2] = "p0";
+    // printf("Start\n");
+    for(int i = 0; i < procs; i++){
+        fname[1] = i + '0';
+        msgids[i] = msgget(ftok(fname, 65), 0666 | IPC_CREAT); // Creates msg queue and returns identifier for each proc
+    }
 
-	int start = uptime();
+    // printf("Time\n");
+
+	clock_t start_t, end_t, total_t;
+    start_t = clock();
 
 	// Initialise u matrix
 	for (i = 0; i < N; i++){
@@ -53,51 +84,38 @@ int main(int argc, char *argv[])
 			proc_pids[i] = pid;
 		else
 			goto child;
-		// printf(1, "Init proc %d with pid %d\n", i, proc_pids[i]);
+		// printf("Init proc %d with pid %d\n", i, proc_pids[i]);
 	}
 
 	child_flag = 0;
 	num = 0;
-	dps();
 
 	child:
-	if(child_flag == 1){
-		// Child process
-		proc_pids[num] = getpid();
-		prev = proc_pids[num - 1];
-		if(num != procs-1)
-			recv(&next);
-	}
-	else{
-		// Master sends the next proc pid
-		for(i = 1; i < procs-1; i++)
-			send(proc_pids[0], proc_pids[i], &proc_pids[i+1]);
-		
-		// For master next = proc_pids[1]
-		next = proc_pids[1];
-	}
+    prev = num - 1;
+    next = num + 1;
+    proc_pids[num] = getpid();
 
 	first = num*(N-2)/procs + 1; last = (num+1)*(N-2)/procs;
-	printf(1, "Proc %d first %d last %d\n", proc_pids[num], first, last);
+	printf("Proc %d pid %d first %d last %d prev %d next %d\n", num, proc_pids[num], first, last, prev, next);
 
 	// Parallelised jacobi method
 	for(;;){
 		diff = 0.0;
 		// Share border results with next and prev
 		if(num != procs-1)
-			for(j = 1; j < N; j++)
+			for(j = 1; j < N-1; j++)
 				send(proc_pids[num], next, &u[last][j]);
 		
 		if(num != 0)
-			for(j = 1; j < N; j++)
+			for(j = 1; j < N-1; j++)
 				recv(&u[first - 1][j]);
 	
 		if(num != 0)
-			for(j = 1; j < N; j++)
+			for(j = 1; j < N-1; j++)
 				send(proc_pids[num], prev, &u[first][j]);
 		
 		if(num != procs-1)
-			for(j = 1; j < N; j++)
+			for(j = 1; j < N-1; j++)
 				recv(&u[last + 1][j]);
 
 		// Compute jacobi for submatrix
@@ -112,7 +130,7 @@ int main(int argc, char *argv[])
 
 		// Send difference
 		if(num != 0){
-			send(proc_pids[num], proc_pids[0], &diff);
+			send(proc_pids[num], 0, &diff);
 			recv(&diff);
 		}
 		else{
@@ -122,7 +140,7 @@ int main(int argc, char *argv[])
 					diff = diff_temp;
 			}
 			for(j = 1; j < procs; j++)
-				send(proc_pids[0], proc_pids[j], &diff);
+				send(proc_pids[0], j, &diff);
 		}
 
 		if(diff <= EPSILON) break;
@@ -130,27 +148,29 @@ int main(int argc, char *argv[])
 			for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 	}
 
-	// printf(1, "Work done by %d\n", proc_pids[num]);
+	// printf("Work done by %d, pid \n", num, proc_pids[num]);
 	
 	// Printing matrix
 	if(num == 0){
 		for(i = 0; i <= last; i++){
 			for(j = 0; j<N; j++){
-				printf(1, "%d ", (int)u[i][j]);
+				printf("%d ", (int)u[i][j]);
 			}
-			printf(1,"\n");
+			printf("\n");
 		}
 		int temp = 0;
 		for(i = 1; i < procs; i++){
-			send(proc_pids[0], proc_pids[i], &proc_pids[i+1]);
+			send(proc_pids[0], i, &proc_pids[i+1]);
 			recv(&temp);
 			count += temp;
 		}
 		for(j = 0; j<N; j++){
-			printf(1, "%d ", (int)u[N-1][j]);
+			printf("%d ", (int)u[N-1][j]);
 		}
-		printf(1, "\nNumber of iteration: %d\n",count);
-		printf(1, "Time = %d Ticks\n", uptime() - start); 
+		printf("\nNumber of iteration: %d\n",count);
+        end_t = clock();
+        double totaltime = (double)(end_t - start_t) * 1000 / CLOCKS_PER_SEC;
+		printf("Time = %f ms\n", totaltime); 
 
 		for(i = 0; i < procs - 1; i++)
 			wait();
@@ -159,12 +179,12 @@ int main(int argc, char *argv[])
 		recv(&next);
 		for(i = first; i <= last; i++){
 			for(j = 0; j<N; j++){
-				printf(1, "%d ", (int)u[i][j]);
+				printf("%d ", (int)u[i][j]);
 			}
-			printf(1,"\n");
+			printf("\n");
 		}
-		send(proc_pids[num], proc_pids[0], &count);
+		send(proc_pids[num], 0, &count);
 	}
 	
-	exit();
+	exit(0);
 }

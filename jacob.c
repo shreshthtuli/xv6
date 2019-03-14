@@ -3,7 +3,7 @@
 #include "user.h"
 
 #define N 20
-#define EPSILON 0.01
+#define EPSILON 0.001
 
 double fabs(double a){
 	if(a > 0)
