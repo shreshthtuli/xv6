@@ -5,9 +5,9 @@
 #define max_queue_elements 100
 
 #define P 25
-#define P1 1
-#define P2 23
-#define P3 1
+#define P1 5
+#define P2 15
+#define P3 5
 
 typedef struct{
   int queue[max_queue_elements];
@@ -86,8 +86,9 @@ int main(int argc, char *argv[])
     next:
     // printf(1, "Found (%d, %d) as my pid = %d\n", i, j, getpid());
 
+    // Set my wait_time
     if(size*i + j < P1 + P2)
-        wait_time = 2;
+        wait_time = 200;
 
     // Send request to quorum - msg = my pid
     for(int p = 0; p < size; p++){

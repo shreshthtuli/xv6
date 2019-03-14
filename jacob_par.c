@@ -3,7 +3,7 @@
 #include "user.h"
 
 #define N 10
-#define EPSILON 0.01
+#define EPSILON 0.001
 
 double fabs(double a){
 	if(a > 0)
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 4;
+	int procs = 2;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	if(num == 0){
 		for(i = 0; i <= last; i++){
 			for(j = 0; j<N; j++){
-				printf(1, "%d,", (int)u[i][j]);
+				printf(1, "%d ", (int)u[i][j]);
 			}
 			printf(1,"\n");
 		}
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 			count += temp;
 		}
 		for(j = 0; j<N; j++){
-			printf(1, "%d,", (int)u[N-1][j]);
+			printf(1, "%d ", (int)u[N-1][j]);
 		}
 		printf(1, "\nNumber of iteration: %d\n",count);
 		printf(1, "Time = %d Ticks\n", uptime() - start); 
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 		recv(&next);
 		for(i = first; i <= last; i++){
 			for(j = 0; j<N; j++){
-				printf(1, "%d,", (int)u[i][j]);
+				printf(1, "%d ", (int)u[i][j]);
 			}
 			printf(1,"\n");
 		}

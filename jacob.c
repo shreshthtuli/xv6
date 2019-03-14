@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
-#define N 10
+#define N 20
 #define EPSILON 0.01
 
 double fabs(double a){
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	}
 	for(i =0; i <N; i++){
 		for(j = 0; j<N; j++){
-			printf(1, "%d,", (int)u[i][j]);
+			printf(1, "%d ", (int)u[i][j]);
 		}
 		printf(1,"\n");
 	}
