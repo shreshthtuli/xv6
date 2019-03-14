@@ -77,7 +77,7 @@ void barrier(){
             printf("Got %d\n", message.mesg_type);
         }
         for(int i = 1; i < P; i++){
-            message.mesg_type = i; printf("Resume %d\n", message.mesg_type);
+            message.mesg_type = 200; printf("Resume %d\n", message.mesg_type);
             msgsnd(pbar2, &message, sizeof(message), 0);
         }
     }
@@ -85,7 +85,7 @@ void barrier(){
         message.mesg_type = 100;
         printf("bar enter %d,%d\n", i, j);
         msgsnd(pbar, &message, sizeof(message), 0);
-        msgrcv(pbar2, &message, sizeof(message), size*i+j, 0); 
+        msgrcv(pbar2, &message, sizeof(message), 200, 0); 
         printf("bar exit %d,%d\n", i, j);
     }
 }
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
                 for(int x = 0; x < size; x++){
                     for(int y = 0; y < size; y++){
                         if(x == i || y == j){
-                            dat = 5*i + j;
+                            int dat = size*i + j;
                             send(getpid(), x, y, dat);
                             printf("Request(%d,%d)-%d to (%d,%d)\n", i, j, dat, x, y);
                         }
@@ -179,14 +179,14 @@ int main(int argc, char *argv[])
     // Check all requests
     int temp;
     temp = recv();
-    send(getpid(), temp/5, temp%5, temp);
+    send(getpid(), temp/size, temp%size, temp);
     // printf(1, "Reply to(%d) by %d\n", temp, getpid());
     for(int p = 0; p < 2*size - 2; p++){
         temp = recv();
         if(temp == -1)
             break;
         enque(temp);
-        printf("Enq temp = %d,  %d,%d by %d,%d\n", temp, temp/5, temp%5, i,j);
+        printf("Enq temp = %d,  %d,%d by %d,%d\n", temp, temp/size, temp%size, i,j);
     }
 
     // printf("third barrier start %d,%d\n", i, j);
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
             num++;
         else if(temp == 100){
             temp = deque();
-            send(getpid(), temp/5, temp%5, temp);
+            send(getpid(), temp/size, temp%size, temp);
             num_procs_done++;
             // printf(1, "Reply(%d) by %d\n", temp, getpid());
         }
