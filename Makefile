@@ -190,7 +190,6 @@ UPROGS=\
 	_time\
 	_barrier_test\
 	_jacob\
-	_jacob_par\
 	_maekawa\
 
 fs.img: mkfs README arr assig2a.inp assig2b.inp $(UPROGS)
@@ -259,7 +258,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	maekawa.c barrier_test.c jacob.c jacob_par.c\
+	maekawa.c barrier_test.c jacob.c\
 	shutdown.c time.c\
 	distributed.c user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
