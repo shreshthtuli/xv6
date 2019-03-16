@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <time.h> 
 
-#define N 20
-#define EPSILON 0.01
+int N, T, P, L;
+float EPSILON;
 
 int msgids[8] = {0};
 int num;
@@ -34,15 +34,41 @@ void recv(float *value)
     *value = atof(message.mesg_text);
 }
 
+void parseInput(){
+    FILE * fp;
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    fp = fopen("assig2a.inp", "r");
+
+    getline(&line, &len, fp);
+    N = atoi(line);
+    getline(&line, &len, fp);
+    EPSILON = atof(line);
+    getline(&line, &len, fp);
+    T = atof(line);
+    getline(&line, &len, fp);
+    P = atoi(line);
+    getline(&line, &len, fp);
+    L = atoi(line);
+
+    printf("Inp : %d, %f, %d, %d, %d\n", N, EPSILON, T, P, L);
+
+    if (line)
+        free(line);
+}
+
 int main(int argc, char *argv[])
 {
+	parseInput();
 	float diff;
 	int i,j;
 	float mean = 0.0;
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 8;
+	int procs = P;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -64,7 +90,7 @@ int main(int argc, char *argv[])
 
 	// Initialise u matrix
 	for (i = 0; i < N; i++){
-		u[i][0] = u[i][N-1] = u[0][i] = 100.0;
+		u[i][0] = u[i][N-1] = u[0][i] = T;
 		u[N-1][i] = 0.0;
 		mean += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
 	}
@@ -96,7 +122,7 @@ int main(int argc, char *argv[])
     proc_pids[num] = getpid();
 
 	first = num*(N-2)/procs + 1; last = (num+1)*(N-2)/procs;
-	printf("Proc %d pid %d first %d last %d prev %d next %d\n", num, proc_pids[num], first, last, prev, next);
+	// printf("Proc %d pid %d first %d last %d prev %d next %d\n", num, proc_pids[num], first, last, prev, next);
 
 	// Parallelised jacobi method
 	for(;;){
@@ -139,6 +165,7 @@ int main(int argc, char *argv[])
 				if(diff_temp > diff)
 					diff = diff_temp;
 			}
+			diff = (count >= L) ? 0 : diff; // if hard count limit reached then diff = 0
 			for(j = 1; j < procs; j++)
 				send(proc_pids[0], j, &diff);
 		}
@@ -148,7 +175,7 @@ int main(int argc, char *argv[])
 			for (j =1; j< N-1; j++) u[i][j] = w[i][j];
 	}
 
-	// printf("Work done by %d, pid \n", num, proc_pids[num]);
+	// printf("Work done by %d \n", num, proc_pids[num]);
 	
 	// Printing matrix
 	if(num == 0){
