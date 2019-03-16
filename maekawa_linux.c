@@ -11,10 +11,7 @@
 
 #define max_queue_elements 100
 
-#define P 25
-#define P1 5
-#define P2 15
-#define P3 5
+int P, P1, P2, P3;
 
 int parent_pid;
 int msgids[5][5] = {0};
@@ -55,6 +52,29 @@ long get_uptime()
     struct sysinfo info;
     sysinfo(&info);
     return info.uptime;
+}
+
+void parseInput(){
+    FILE * fp;
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    fp = fopen("assig2b.inp", "r");
+
+    getline(&line, &len, fp);
+    P = atoi(line);
+    getline(&line, &len, fp);
+    P1 = atoi(line);
+    getline(&line, &len, fp);
+    P2 = atoi(line);
+    getline(&line, &len, fp);
+    P3 = atoi(line);
+
+    printf("Ps : %d, %d, %d, %d\n", P, P1, P2, P3);
+
+    if (line)
+        free(line);
 }
 
 // structure for message queue 
@@ -103,6 +123,7 @@ void barrier(){
 
 int main(int argc, char *argv[])
 {
+    parseInput();
     int proc_pids[5][5];
     int pid;
     parent_pid = getpid();
