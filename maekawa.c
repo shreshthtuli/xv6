@@ -1,13 +1,12 @@
+// MOD-2 : Implementation of Maekawa distributed mutal exclusion algorithm
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "fcntl.h"
 
 #define max_queue_elements 100
 
-#define P 25
-#define P1 5
-#define P2 15
-#define P3 5
+int P = 25, P1 = 5, P2 = 15, P3 = 5;
 
 typedef struct{
   int queue[max_queue_elements];
@@ -36,9 +35,29 @@ int deque()
   return result;
 }
 
+void parseInput(){
+    int fp;
+    char line[10] = "          ";
+	int len;
+
+    fp = open("assig2b.inp", O_CREATE | O_RDWR);
+
+    getline(line, &len, fp);
+    P = atoi(line);
+    getline(line, &len, fp);
+    P1 = atoi(line);
+    getline(line, &len, fp);
+    P2 = atoi(line);
+    getline(line, &len, fp);
+    P3 = atoi(line);
+
+    printf(1, "Inp : %d, %d, %d, %d\n", P, P1, P2, P3);
+}
+
 int main(int argc, char *argv[])
 {
-	int i,j;
+    parseInput();
+	int i = 0,j = 0;
     int proc_pids[5][5];
     int size = 0;
     int pid;

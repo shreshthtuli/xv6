@@ -56,3 +56,6 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+// MOD-2
+float atof(const char*);
+void getline(char*, int*, int);

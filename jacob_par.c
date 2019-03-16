@@ -1,9 +1,11 @@
+// MOD-2 : Parallel implementation of jacobi
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "fcntl.h"
 
-#define N 10
-#define EPSILON 0.001
+int N = 10, P = 2, L = 100000;
+float T = 100.0, EPSILON = 0.01;
 
 double fabs(double a){
 	if(a > 0)
@@ -11,15 +13,39 @@ double fabs(double a){
 	return -a;
 }
 
+void parseInput(){
+    int fp;
+    char line[10] = "          ";
+	int len;
+
+    fp = open("assig2a.inp", O_CREATE | O_RDWR);
+
+    getline(line, &len, fp);
+    N = atoi(line);
+    getline(line, &len, fp);
+    EPSILON = atof(line);
+    getline(line, &len, fp);
+    T = atof(line);
+    getline(line, &len, fp);
+    P = atoi(line);
+    getline(line, &len, fp);
+    L = atoi(line);
+
+    // printf(1, "Inp : %d, %d, %d, %d, %d\n", N, (int)(1000*EPSILON), (int)T, P, L);
+	// printfloat(1, T);
+	// printfloat(1, EPSILON);
+}
+
 int main(int argc, char *argv[])
 {
+	parseInput();
 	float diff;
 	int i,j;
 	float mean = 0.0;
 	float u[20][20];
 	float w[20][20];
 	int count;
-	int procs = 2;
+	int procs = P;
 	int proc_pids[procs];
 	proc_pids[0] = getpid(); // Master proc
 	int child_flag = 1;
@@ -33,7 +59,7 @@ int main(int argc, char *argv[])
 
 	// Initialise u matrix
 	for (i = 0; i < N; i++){
-		u[i][0] = u[i][N-1] = u[0][i] = 100.0;
+		u[i][0] = u[i][N-1] = u[0][i] = T;
 		u[N-1][i] = 0.0;
 		mean += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
 	}
@@ -121,6 +147,7 @@ int main(int argc, char *argv[])
 				if(diff_temp > diff)
 					diff = diff_temp;
 			}
+			diff = (count >= L) ? 0 : diff;
 			for(j = 1; j < procs; j++)
 				send(proc_pids[0], proc_pids[j], &diff);
 		}

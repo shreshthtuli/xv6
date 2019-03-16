@@ -92,6 +92,45 @@ atoi(const char *s)
   return n;
 }
 
+// MOD-2 : string to float function
+float
+atof(const char *s)
+{
+  float result = 0.0;
+  float scale  = 0.0;
+
+  while (*s) {
+      if (*s >= '0' && *s <= '9') {
+          result = 10.0 * result + (float)(*s - '0');
+          scale *= 10.0;
+      }
+      else if (*s == '.') scale = 1.0;
+      else break;
+      s++;
+  }
+  result = result / (scale == 0.0 ? 1.0 : scale);
+  return result;
+}
+
+// MOD-2 : getline from file
+void
+getline(char *buf, int *len, int fd)
+{
+  int i, cc;
+  char c;
+
+  for(i=0;; ){
+    cc = read(fd, &c, 1);
+    if(cc < 1)
+      break;
+    buf[i++] = c;
+    if(c == '\n' || c == '\r')
+      break;
+  }
+  *len = i;
+  buf[i] = '\0';
+}
+
 void*
 memmove(void *vdst, const void *vsrc, int n)
 {
