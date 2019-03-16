@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 
 	child_flag = 0;
 	num = 0;
-	dps();
+	// dps();
 
 	child:
 	if(child_flag == 1){
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	}
 
 	first = num*(N-2)/procs + 1; last = (num+1)*(N-2)/procs;
-	printf(1, "Proc %d first %d last %d\n", proc_pids[num], first, last);
+	// printf(1, "Proc %d first %d last %d\n", proc_pids[num], first, last);
 
 	// Parallelised jacobi method
 	for(;;){
