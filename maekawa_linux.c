@@ -217,11 +217,13 @@ int main(int argc, char *argv[])
     int num = 0;
     while(1){
         temp = recv();
-        if(temp == 500){
+        if(temp >= 500){
             int temp1 = deque();
-            send(getpid(), temp1/size, temp1%size, temp1);
+            if(temp1 != -1)
+                send(getpid(), temp1/size, temp1%size, temp1);
             num_procs_done++;
             // printf("Reply to (%d) by %d,%d\n", temp1, i,j);
+            // printf("Numprocs done at %d is %d\n", proc_pids[i][j], num_procs_done);
         }
         else{
             num++;
@@ -244,9 +246,11 @@ int main(int argc, char *argv[])
     nosend:
 
     temp = deque();
-    send(getpid(), temp/size, temp%size, temp);
+    if(temp != -1)
+        send(getpid(), temp/size, temp%size, temp);
     // printf("Reply to (%d) by %d,%d\n", temp, i,j);
     num_procs_done++;
+    // printf("Numprocs done at %d is %d\n", proc_pids[i][j], num_procs_done);
     proc_pids[0][0] = parent_pid;
 
     // Send release to quorum
@@ -264,11 +268,12 @@ int main(int argc, char *argv[])
         temp = recv();
         if(temp == 500){
             temp = deque();
-            send(getpid(), temp/size, temp%size, 100);
+            if(temp != -1)
+                send(getpid(), temp/size, temp%size, 100);
             // printf("Reply to (%d) by %d,%d\n", temp, i,j);
             num_procs_done++;
         }
-        // printf(1, "Numprocs done at %d is %d\n", proc_pids[i][j], num_procs_done);
+        // printf("Numprocs done at %d is %d\n", proc_pids[i][j], num_procs_done);
 
         if(num_procs_done >= 2*size - 1)
             break;
