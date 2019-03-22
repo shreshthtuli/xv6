@@ -71,7 +71,7 @@ void parseInput(){
     getline(&line, &len, fp);
     P3 = atoi(line);
 
-    printf("Ps : %d, %d, %d, %d\n", P, P1, P2, P3);
+    // printf("Ps : %d, %d, %d, %d\n", P, P1, P2, P3);
 
     if (line)
         free(line);

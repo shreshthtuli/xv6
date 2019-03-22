@@ -53,7 +53,7 @@ void parseInput(){
     getline(&line, &len, fp);
     L = atoi(line);
 
-    printf("Inp : %d, %f, %d, %d, %d\n", N, EPSILON, T, P, L);
+    // printf("Inp : %d, %f, %d, %d, %d\n", N, EPSILON, T, P, L);
 
     if (line)
         free(line);
