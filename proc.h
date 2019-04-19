@@ -65,6 +65,8 @@ struct proc {
   char msg[message_size];      // MOD-1 : Signal msg
   int disableSignals;          // MOD-1 : Disable signals when currently processing one
   int interrupt; 
+  int containerID;             // MOD-3 : Container ID
+  enum procstate v_state;      // MOD-3 : Virtual process state
 };
 
 // Process memory is laid out contiguously, low addresses first:

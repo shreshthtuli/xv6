@@ -64,6 +64,22 @@ kernel_barrier bar = {
   .pids = { 0 }
 };
 
+
+// MOD-3 : Container struct
+
+typedef struct{
+  int containerIDs[NPROC];
+  int numActive;
+  int procIDs[NPROC][NPROC];
+} containerStruct;
+
+containerStruct container = {
+  .containerIDs = { 0 },
+  .numActive = 0,
+  .procIDs = { 0 }
+};
+
+
 int
 sys_fork(void)
 {
@@ -384,5 +400,78 @@ sys_barrier(void)
       wakeup((void*)bar.pids[i]);
   }
   release(&bar.lock);
+  return 0;
+}
+
+// MOD-3 : Create container syscall
+int
+sys_create_container(void)
+{
+  // Initialize struct
+  if(container.numActive == 0){
+    for(int i = 0; i < NPROC; i++){
+      container.containerIDs[i] = 0;
+      for(int j = 0; j < NPROC; j++)
+        container.procIDs[i][j] = -1;
+    }
+  }
+
+  for(int i = 0; i < NPROC; i++){
+    if(container.containerIDs[i] == 0){
+      container.containerIDs[i] = 1;
+      container.numActive += 1;
+      return i;
+    }
+  }
+  return -1;
+}
+
+// MOD-3 : Destroy container syscall
+void destroy_container(int id);
+int
+sys_destroy_container(int id)
+{
+  argint(0, &id);
+  if(container.containerIDs[id] == 0){
+    return -1; // Container not yet created
+  }
+  // Remove all procs from this container
+  destroy_container(id);
+  for(int j = 0; j < NPROC; j++)
+    container.procIDs[id][j] = -1;
+  container.containerIDs[id] = 0;
+  container.numActive -= 1;
+  return 0;
+}
+
+// MOD-3 : Join container
+int
+sys_join_container(int id)
+{
+  argint(0, &id);
+  myproc()->containerID = id;
+  for(int j = 0; j < NPROC; j++){
+    if(container.procIDs[id][j] == -1){
+      container.procIDs[id][j] = myproc()->pid;
+      return 0;
+    }
+  }
+  return -1; // Means container is full
+}
+
+// MOD-3 : Leave container
+int
+sys_leave_container(void)
+{
+  int id = myproc()->containerID;
+  if(id == -1 || container.containerIDs[id] == 0)
+    return -1; // This proc does not belong to any container or container destroyed
+
+  for(int j = 0; j < NPROC; j++){
+    if(container.procIDs[id][j] == myproc()->pid){
+      container.procIDs[id][j] = -1;
+    }
+  }
+  myproc()->containerID = -1;
   return 0;
 }

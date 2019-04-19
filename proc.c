@@ -148,6 +148,7 @@ userinit(void)
   p->sig_handler = (sig_handler)-1; // MOD-1 : init process has not handler
   p->disableSignals = 0; // MOD-1
   p->interrupt = 0;
+  p->containerID = -1; // MOD-3 : Default container ID is -1
   *p->msg = -1;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
@@ -211,10 +212,11 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
-  np->sig_handler = curproc->sig_handler; // Signal handler of parent
+  np->sig_handler = curproc->sig_handler; // MOD-1 : Signal handler of parent
   *np->msg = -1;
   np->disableSignals = 0;
   np->interrupt = 0;
+  np->containerID = -1; // MOD-3 : Container ID initialised to -1 for every new process
   
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -644,5 +646,22 @@ void checkSignals(struct trapframe *tf)
   p->tf->esp -= 8;
   p->tf->eip = (uint)p->sig_handler; // resume from signal handler
   *p->msg = -1; // reset process message
+  release(&ptable.lock);
+}
+
+
+// MOD-3 : Destroy container
+void
+destroy_container(int id)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->containerID == id) {
+      p->containerID = -1;
+    }
+  }
   release(&ptable.lock);
 }
