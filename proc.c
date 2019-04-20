@@ -679,3 +679,23 @@ destroy_container(int id)
   }
   release(&ptable.lock);
 }
+
+// MOD-3 : List all running processes (only pid and name) for current container
+void
+process_status_container(void)
+{
+  struct proc *p;
+  int containerID = myproc()->containerID;
+
+  acquire(&ptable.lock);
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->containerID == containerID && p->state != UNUSED) {
+      if(p->v_state == V_RUNNABLE)
+        cprintf("pid:%d\tname:%s\tstate:%s\n", p->pid, p->name, "WAITING");
+      else
+        cprintf("pid:%d\tname:%s\tstate:%s\n", p->pid, p->name, "RUNNING");
+    }
+  }
+  release(&ptable.lock);
+}

@@ -471,3 +471,12 @@ sys_leave_container(void)
   myproc()->containerID = -1;
   return 0;
 }
+
+// MOD-3 : Container ps
+void process_status_container(void);
+int
+sys_proc_stat_container(void)
+{
+  process_status_container();
+  return 0;
+}
