@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "syscall_container.h"
 
 int scheds = 0;
 int pid_to_count = -1;
@@ -341,6 +342,7 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *p1;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -350,9 +352,21 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    // MOD-3 : Custom container scheduling
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+      if(p->v_state != V_RUNNABLE)
+        continue;
+      
+      p->v_state = V_RUNNING; // MOD-3 : Make this process virtually running
+      for(int j = 0; j < NPROC; j++){
+        // Other process which was v_running in this container to shift to v_runnable
+        for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++){
+          if(p1->containerID == p->containerID && p1->v_state == V_RUNNING)
+            p1->v_state = V_RUNNABLE;
+        }
+      }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it

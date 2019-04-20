@@ -44,6 +44,7 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+enum v_procstate { V_UNUSED, V_EMBRYO, V_SLEEPING, V_RUNNABLE, V_RUNNING, V_ZOMBIE };
 
 // Per-process state
 struct proc {
@@ -66,7 +67,7 @@ struct proc {
   int disableSignals;          // MOD-1 : Disable signals when currently processing one
   int interrupt; 
   int containerID;             // MOD-3 : Container ID
-  enum procstate v_state;      // MOD-3 : Virtual process state
+  enum v_procstate v_state;      // MOD-3 : Virtual process state
 };
 
 // Process memory is laid out contiguously, low addresses first:

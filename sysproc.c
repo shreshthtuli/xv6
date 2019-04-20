@@ -8,6 +8,7 @@
 #include "proc.h"
 #include "syscall_trace.h"
 #include "spinlock.h"
+#include "syscall_container.h"
 
 #define num_message_buffers 1000
 #define message_size 8
@@ -36,6 +37,15 @@ kernel_buffers kern = {
   .wait_queue = { 0 }
 };
 
+
+// MOD-3 : Declaration of extern container struct
+
+containerStruct container = {
+  .containerIDs = { 0 },
+  .numActive = 0,
+  .procIDs = { 0 }
+};
+
 void enque(int pid, int index)
 {
   kern.queue[pid][kern.tail[pid]] = index;
@@ -62,21 +72,6 @@ kernel_barrier bar = {
   .num_procs = 0,
   .arrived = 0,
   .pids = { 0 }
-};
-
-
-// MOD-3 : Container struct
-
-typedef struct{
-  int containerIDs[NPROC];
-  int numActive;
-  int procIDs[NPROC][NPROC];
-} containerStruct;
-
-containerStruct container = {
-  .containerIDs = { 0 },
-  .numActive = 0,
-  .procIDs = { 0 }
 };
 
 
@@ -450,6 +445,7 @@ sys_join_container(int id)
 {
   argint(0, &id);
   myproc()->containerID = id;
+  myproc()->v_state = V_RUNNABLE;
   for(int j = 0; j < NPROC; j++){
     if(container.procIDs[id][j] == -1){
       container.procIDs[id][j] = myproc()->pid;
