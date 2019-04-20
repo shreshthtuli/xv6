@@ -680,7 +680,7 @@ destroy_container(int id)
   release(&ptable.lock);
 }
 
-// MOD-3 : List all running processes (only pid and name) for current container
+// MOD-3 : List all running processes (only pid, name and state) for current container
 void
 process_status_container(void)
 {

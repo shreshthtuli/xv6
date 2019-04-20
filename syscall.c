@@ -121,6 +121,12 @@ extern int sys_end_timer(void);
 // MOD-2 : Barrier syscalls
 extern int sys_barrier_init(void);
 extern int sys_barrier(void);
+// MOD-3 : Container syscalls
+extern int sys_create_container(void);
+extern int sys_destroy_container(void);
+extern int sys_join_container(void);
+extern int sys_leave_container(void);
+extern int sys_proc_stat_container(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -161,6 +167,12 @@ static int (*syscalls[])(void) = {
 // MOD-2 : Barrier syscalls
 [SYS_barrier_init] sys_barrier_init,
 [SYS_barrier] sys_barrier,
+// MOD-3 : Container syscalls
+[SYS_create_container] sys_create_container,
+[SYS_destroy_container] sys_destroy_container,
+[SYS_join_container] sys_join_container,
+[SYS_leave_container]  sys_leave_container,
+[SYS_proc_stat_container] sys_proc_stat_container,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -202,7 +214,12 @@ char* syscallnames[] = {
     "sys_start_timer",
     "sys_end_timer",
     "sys_barrier_init",
-    "sys_barrier"
+    "sys_barrier",
+    "sys_create_container",
+    "sys_destroy_container",
+    "sys_join_container",
+    "sys_leave_container",
+    "sys_proc_stat_container",
 };
 
 int num_sys_calls = NELEM(syscallnames);

@@ -41,6 +41,12 @@ int end_timer(int); // Extra
 // MOD-2
 int barrier_init(int);
 int barrier(void);
+// MOD-3
+int create_container(void);
+int destroy_container(int);
+int join_container(int);
+int leave_container(void);
+int proc_stat_container(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

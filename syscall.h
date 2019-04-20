@@ -34,6 +34,12 @@
 #define SYS_shutdown    32
 #define SYS_start_timer 33
 #define SYS_end_timer   34
-// MOD-1 : Barrier syscalls
-#define SYS_barrier_init 35
+// MOD-2 : Barrier syscalls
+#define SYS_barrier_init        35
 #define SYS_barrier     36
+// MOD-3 : Container syscalls
+#define SYS_create_container    37
+#define SYS_destroy_container   38
+#define SYS_join_container      39
+#define SYS_leave_container     40
+#define SYS_proc_stat_container 41
