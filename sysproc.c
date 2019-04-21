@@ -485,6 +485,7 @@ sys_proc_stat_container(void)
   return 0;
 }
 
+// MOD-3 : Scheduling on for container
 int
 sys_scheduler_log_on(void)
 {
@@ -495,6 +496,7 @@ sys_scheduler_log_on(void)
   return 0;
 }
 
+// MOD-3 : Scheduling off for container
 int
 sys_scheduler_log_off(void)
 {
@@ -505,6 +507,7 @@ sys_scheduler_log_off(void)
   return 0;
 }
 
+// MOD-3 : Allow syscalls from container
 int 
 sys_bar_container(int containerID, int sysID)
 {
@@ -521,6 +524,7 @@ sys_bar_container(int containerID, int sysID)
   return 0;
 }
 
+// MOD-3 : Disallow syscalls from container
 int 
 sys_debar_container(int containerID, int sysID)
 {
