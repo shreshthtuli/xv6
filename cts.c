@@ -33,10 +33,10 @@ int
 printFilename(char* fname, int type, int ino, int size)
 {
   int i;
-  for(i = strlen(fname); i >= 0; i++){
-    if(fname[i] == '_')
+  for(i = strlen(fname); i >= 0; i--){
+    if(fname[i]-0 == 15)
       break;
-    else if(fname[i] == ' ')
+    else if(fname[i]-0 == 32 || fname[i]+0 == 0)
       continue;
     else{
       i = -1;
@@ -45,8 +45,16 @@ printFilename(char* fname, int type, int ino, int size)
     }
   }
   int id = cid();
-  if(fname[i-1] == id%10 + '0' && fname[i-2] == id/10 + '0'){
-    printf(1, "%s %d %d %d\n", fname, type, ino, size);
+  if(id == -1)
+    return 0;
+  if(fname[i-2] == id%10 + '0' && fname[i-3] == id/10 + '0'){
+    for(int j = 0; j < 14; j++){
+      if(j < i-4)
+        printf(1, "%c", fname[j]);
+      else
+        printf(1, " ");
+    }
+    printf(1, " %d %d %d\n", type, ino, size);
     return 1; // This container
   }
   return -1;  // Some other container so do nothing
@@ -100,15 +108,33 @@ ls(char *path)
   close(fd);
 }
 
+char buf[512];
+void
+cat(int fd)
+{
+  int n;
+
+  printf(1, "%d", read(fd, buf, sizeof(buf)));
+  while((n = read(fd, buf, sizeof(buf))) > 0) {
+    printf(1, "%c", n);
+  }
+  if(n < 0){
+    printf(1, "cat: read error\n");
+    exit();
+  }
+}
+
+
 int main(int argc, char *argv[])
 {   
     ls(".");
-    // int id = create_container();
-    // join_container(id);
-    // printf(1, "Joined container %d\n", id);
-    // proc_stat_container();
+    int id = create_container();
+    join_container(id);
+    printf(1, "Joined container %d\n", id);
+    proc_stat_container();
     int fd = open("file", O_CREATE|O_RDWR);
-    write(fd, "HI", 2);
+    write(fd, "Modified", 8);
+    cat(fd);
     close(fd);
     printf(1, "Done\n");
     ls(".");
