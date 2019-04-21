@@ -356,9 +356,7 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-      if(p->v_state != V_RUNNABLE)
-        continue;
-      
+     
       p->v_state = V_RUNNING; // MOD-3 : Make this process virtually running
       // MOD-3 : Print schedule if log on
       if(container.containerIDs[p->containerID] == 2)
