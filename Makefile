@@ -257,7 +257,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	cts.c\
+	cts.c container.c\
 	barrier_test.c\
 	shutdown.c time.c\
 	distributed.c user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\

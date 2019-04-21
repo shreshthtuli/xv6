@@ -361,11 +361,10 @@ scheduler(void)
       // MOD-3 : Print schedule if log on
       if(container.containerIDs[p->containerID] == 2)
         cprintf("Container:%d\tScheduling process:%d\n", p->containerID, p->pid);
-      for(int j = 0; j < NPROC; j++){
-        // Other process which was v_running in this container to shift to v_runnable
-        for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++){
-          if(p1->containerID != -1 && p1->containerID == p->containerID && p1->v_state == V_RUNNING)
-            p1->v_state = V_RUNNABLE;
+      // Other process which was v_running in this container to shift to v_runnable
+      for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++){
+        if(p1->containerID != -1 && p1->containerID == p->containerID && p1->v_state == V_RUNNING && p1->pid != p->pid){
+          p1->v_state = V_RUNNABLE;
         }
       }
 
@@ -692,10 +691,10 @@ process_status_container(void)
   
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if (p->containerID == containerID && p->state != UNUSED) {
-      if(p->v_state == V_RUNNABLE)
-        cprintf("pid:%d\tname:%s\tstate:%s\n", p->pid, p->name, "WAITING");
-      else
+      if(p->pid == myproc()->pid)
         cprintf("pid:%d\tname:%s\tstate:%s\n", p->pid, p->name, "RUNNING");
+      else
+        cprintf("pid:%d\tname:%s\tstate:%s\n", p->pid, p->name, "WAITING");
     }
   }
   release(&ptable.lock);

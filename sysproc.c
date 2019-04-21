@@ -463,6 +463,7 @@ int
 sys_leave_container(void)
 {
   int id = myproc()->containerID;
+  myproc()->containerID = -1;
   if(id == -1 || container.containerIDs[id] == 0)
     return -1; // This proc does not belong to any container or container destroyed
 
@@ -472,7 +473,6 @@ sys_leave_container(void)
       break;
     }
   }
-  myproc()->containerID = -1;
   return 0;
 }
 

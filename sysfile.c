@@ -283,23 +283,10 @@ create(char *path, short type, short major, short minor)
   return ip;
 }
 
-void fileConvert(char* newname, char* name, int id)
-{
-  for(int i = 0; i < strlen(name); i++)
-    newname[i] = name[i];
-
-  newname[strlen(name)] = '_';
-  newname[strlen(name)+1] = id/10 + '0';
-  newname[strlen(name)+2] = id%10 + '0';
-  newname[strlen(name)+3] = '_';
-  cprintf("File created with name = %s, %d, %s\n", newname, id, name);
-}
-
 int
 sys_open(void)
 {
   char *path;
-  char* containerpath;
   int fd, omode;
   struct file *f;
   struct inode *ip;
@@ -307,23 +294,16 @@ sys_open(void)
   if(argstr(0, &path) < 0 || argint(1, &omode) < 0)
     return -1;
 
-  if(myproc()->containerID != -1 && omode & O_CREATE){
-    fileConvert(containerpath, path, myproc()->containerID);
-  }
-  else{
-    argstr(0, &containerpath);
-  }
-
   begin_op();
 
   if(omode & O_CREATE){
-    ip = create(containerpath, T_FILE, 0, 0);
+    ip = create(path, T_FILE, 0, 0);
     if(ip == 0){
       end_op();
       return -1;
     }
   } else {
-    if((ip = namei(containerpath)) == 0){
+    if((ip = namei(path)) == 0){
       end_op();
       return -1;
     }

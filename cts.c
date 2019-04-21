@@ -1,8 +1,4 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
-#include "fcntl.h"
-#include "fs.h"
+#include "container.c"
 
 #define procs 3
 #define num_containers 2
@@ -10,133 +6,43 @@
 int parent_pid;
 int num;
 
-char*
-fmtname(char *path)
-{
-  static char buf[DIRSIZ+1];
-  char *p;
-
-  // Find first character after last slash.
-  for(p=path+strlen(path); p >= path && *p != '/'; p--)
-    ;
-  p++;
-
-  // Return blank-padded name.
-  if(strlen(p) >= DIRSIZ)
-    return p;
-  memmove(buf, p, strlen(p));
-  memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
-  return buf;
-}
-
-int
-printFilename(char* fname, int type, int ino, int size)
-{
-  int i;
-  for(i = strlen(fname); i >= 0; i--){
-    if(fname[i]-0 == 15)
-      break;
-    else if(fname[i]-0 == 32 || fname[i]+0 == 0)
-      continue;
-    else{
-      i = -1;
-      printf(1, "%s %d %d %d\n", fname, type, ino, size);
-      return 0; // Host
-    }
-  }
-  int id = cid();
-  if(id == -1)
-    return 0;
-  if(fname[i-2] == id%10 + '0' && fname[i-3] == id/10 + '0'){
-    for(int j = 0; j < 14; j++){
-      if(j < i-4)
-        printf(1, "%c", fname[j]);
-      else
-        printf(1, " ");
-    }
-    printf(1, " %d %d %d\n", type, ino, size);
-    return 1; // This container
-  }
-  return -1;  // Some other container so do nothing
-}
-
-void
-ls(char *path)
-{
-  char buf[512], *p;
-  int fd;
-  struct dirent de;
-  struct stat st;
-
-  if((fd = open(path, 0)) < 0){
-    printf(2, "ls: cannot open %s\n", path);
-    return;
-  }
-
-  if(fstat(fd, &st) < 0){
-    printf(2, "ls: cannot stat %s\n", path);
-    close(fd);
-    return;
-  }
-
-  switch(st.type){
-  case T_FILE:
-    printf(1, "%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
-    break;
-
-  case T_DIR:
-    if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
-      printf(1, "ls: path too long\n");
-      break;
-    }
-    strcpy(buf, path);
-    p = buf+strlen(buf);
-    *p++ = '/';
-    while(read(fd, &de, sizeof(de)) == sizeof(de)){
-      if(de.inum == 0)
-        continue;
-      memmove(p, de.name, DIRSIZ);
-      p[DIRSIZ] = 0;
-      if(stat(buf, &st) < 0){
-        printf(1, "ls: cannot stat %s\n", buf);
-        continue;
-      }
-      printFilename(fmtname(buf), st.type, st.ino, st.size);
-    }
-    break;
-  }
-  close(fd);
-}
-
-char buf[512];
-void
-cat(int fd)
-{
-  int n;
-
-  printf(1, "%d", read(fd, buf, sizeof(buf)));
-  while((n = read(fd, buf, sizeof(buf))) > 0) {
-    printf(1, "%c", n);
-  }
-  if(n < 0){
-    printf(1, "cat: read error\n");
-    exit();
-  }
-}
-
 
 int main(int argc, char *argv[])
 {   
-    ls(".");
+    container_ls();
+    int host = open("filehost", O_CREATE|O_RDWR);
+    write(host, "This is a host file", 19);
+    close(host);
     int id = create_container();
     join_container(id);
+    // scheduler_log_on();
     printf(1, "Joined container %d\n", id);
     proc_stat_container();
-    int fd = open("file", O_CREATE|O_RDWR);
-    write(fd, "Modified", 8);
-    cat(fd);
-    close(fd);
+    dps();
+
+    int fd = container_create("file");
+    container_write(fd, "Modified");
+    container_close(fd);
+    container_cat("file");
     printf(1, "Done\n");
-    ls(".");
+    container_ls();
+    container_cat("file");
+    sleep(100);
+    printf(1, "\n");
+    fd = container_open("file");
+    container_write(fd, "Modifiedagain");
+    container_close(fd);
+    container_cat("file");
+    printf(1, "\n");
+    fd = container_open("filehost");
+    container_write(fd, "ModifiedHostfile\n");
+    container_close(fd);
+    container_cat("filehost");
+    container_ls();
+    leave_container();
+    printf(1, "Containerid = %d\n", cid());
+    container_ls();
+    container_cat("filehost");
+    printf(1, "\n");
     return 0;
 }
