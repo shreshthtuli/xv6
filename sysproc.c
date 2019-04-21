@@ -407,6 +407,8 @@ sys_create_container(void)
   if(container.numActive == 0){
     for(int i = 0; i < NPROC; i++){
       container.containerIDs[i] = 0;
+      container.memorylog[i] = 0;
+      container.gva[i] = 0;
       for(int j = 0; j < NPROC; j++)
         container.procIDs[i][j] = -1;
       for(int j = 0; j < 100; j++)
@@ -546,4 +548,34 @@ int
 sys_cid(void)
 {
   return myproc()->containerID; 
+}
+
+// MOD-3 : Enable memory logging
+int
+sys_memory_log_on(void)
+{
+  container.memorylog[myproc()->containerID] = 1;
+  return 0;
+}
+
+// MOD-3 : Disable memory logging
+int
+sys_memory_log_off(void)
+{
+  container.memorylog[myproc()->containerID] = 0;
+  return 0;
+}
+
+// MOD-3 : Give next virtual address
+int
+sys_memory_gva(int size, int hva)
+{
+  argint(0, &size);
+  argint(1, &hva);
+  int id = myproc()->containerID;
+  int addr = container.gva[id];
+  container.gva[id] = addr + size;
+  if(container.memorylog[id] == 1)
+    cprintf("GVA : %d, HVA : %x\n", addr, hva);
+  return addr;
 }

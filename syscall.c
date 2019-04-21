@@ -131,6 +131,9 @@ extern int sys_proc_stat_container(void);
 extern int sys_scheduler_log_on(void);
 extern int sys_scheduler_log_off(void);
 extern int sys_cid(void);
+extern int sys_memory_log_on(void);
+extern int sys_memory_log_off(void);
+extern int sys_memory_gva(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -179,7 +182,10 @@ static int (*syscalls[])(void) = {
 [SYS_proc_stat_container] sys_proc_stat_container,
 [SYS_scheduler_log_on] sys_scheduler_log_on,
 [SYS_scheduler_log_off] sys_scheduler_log_off,
-[SYS_cid]        sys_cid
+[SYS_cid]        sys_cid,
+[SYS_memory_log_on]     sys_memory_log_on,
+[SYS_memory_log_off]    sys_memory_log_off,
+[SYS_memory_gva]        sys_memory_gva
 };
 
 // MOD-1 : Definitions of external variables here
@@ -229,7 +235,10 @@ char* syscallnames[] = {
     "sys_proc_stat_container",
     "sys_scheduler_log_on",
     "sys_scheduler_log_off",
-    "sys_cid"
+    "sys_cid",
+    "sys_memory_log_on",
+    "sys_memory_log_off",
+    "sys_memory_gva"
 };
 
 int num_sys_calls = NELEM(syscallnames);

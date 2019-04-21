@@ -46,3 +46,6 @@
 #define SYS_scheduler_log_on    42
 #define SYS_scheduler_log_off   43
 #define SYS_cid         44
+#define SYS_memory_log_on       45
+#define SYS_memory_log_off      46
+#define SYS_memory_gva          47

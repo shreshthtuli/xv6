@@ -20,6 +20,15 @@ int main(int argc, char *argv[])
     proc_stat_container();
     dps();
 
+    memory_log_on();
+    char* a = (char*)container_malloc(sizeof(char)*10);
+    a[5] = 'x';
+    a = (char*)container_malloc(sizeof(char)*15);
+    a = (char*)container_malloc(sizeof(char)*35);
+    memory_log_off();
+
+    printf(1, "%s", a);
+
     int fd = container_create("file");
     container_write(fd, "Modified");
     container_close(fd);

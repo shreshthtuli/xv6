@@ -50,6 +50,9 @@ int proc_stat_container(void);
 int scheduler_log_on(void);
 int scheduler_log_off(void);
 int cid(void);
+int memory_log_on(void);
+int memory_log_off(void);
+int memory_gva(int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

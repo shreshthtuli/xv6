@@ -4,6 +4,15 @@
 #include "fs.h"
 #include "fcntl.h"
 
+void*
+container_malloc(uint size)
+{
+    void* res = malloc(size);
+    memory_gva(size, (int)res);
+    return res;
+}
+
+
 char buf[512];
 
 // MOD-3 : Helper function for ls
