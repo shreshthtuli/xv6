@@ -49,6 +49,7 @@ int leave_container(void);
 int proc_stat_container(void);
 int scheduler_log_on(void);
 int scheduler_log_off(void);
+int cid(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

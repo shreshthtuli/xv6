@@ -536,3 +536,10 @@ sys_debar_container(int containerID, int sysID)
   }
   return 0;
 }
+
+// MOD-3 : getcid system call
+int
+sys_cid(void)
+{
+  return myproc()->containerID; 
+}

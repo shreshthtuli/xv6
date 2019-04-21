@@ -191,6 +191,7 @@ UPROGS=\
 	_barrier_test\
 	_jacob\
 	_maekawa\
+	_cts\
 
 fs.img: mkfs README arr assig2a.inp assig2b.inp $(UPROGS)
 	./mkfs fs.img README arr assig2a.inp assig2b.inp $(UPROGS)
@@ -258,6 +259,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
+	cts.c\
 	maekawa.c barrier_test.c jacob.c\
 	shutdown.c time.c\
 	distributed.c user_multicast.c user_unicast.c user_ps.c user_add.c user_toggle.c print_count.c\

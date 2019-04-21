@@ -45,3 +45,4 @@
 #define SYS_proc_stat_container 41
 #define SYS_scheduler_log_on    42
 #define SYS_scheduler_log_off   43
+#define SYS_cid         44
