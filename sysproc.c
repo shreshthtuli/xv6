@@ -408,6 +408,8 @@ sys_create_container(void)
       container.containerIDs[i] = 0;
       for(int j = 0; j < NPROC; j++)
         container.procIDs[i][j] = -1;
+      for(int j = 0; j < 100; j++)
+        container.notAllowed[i][j] = 0;
     }
   }
 
@@ -466,6 +468,7 @@ sys_leave_container(void)
   for(int j = 0; j < NPROC; j++){
     if(container.procIDs[id][j] == myproc()->pid){
       container.procIDs[id][j] = -1;
+      break;
     }
   }
   myproc()->containerID = -1;
@@ -479,4 +482,54 @@ sys_proc_stat_container(void)
 {
   process_status_container();
   return 0;
+}
+
+int
+sys_scheduler_log_on(void)
+{
+  int id = myproc()->containerID;
+  if(container.containerIDs[id] != 1)
+    return -1; // This container is not active
+  container.containerIDs[id] = 2; // 1 means active, 2 means log on, 0 inactive
+  return 0;
+}
+
+int
+sys_scheduler_log_off(void)
+{
+  int id = myproc()->containerID;
+  if(container.containerIDs[id] != 2)
+    return -1; // This container is not active and log on
+  container.containerIDs[id] = 1; // 1 means active, 2 means log on, 0 inactive
+  return 0;
+}
+
+int 
+sys_bar_container(int containerID, int sysID)
+{
+  argint(0, &containerID);
+  argint(1, &sysID);
+  if(myproc()->containerID != -1)
+    return -2; // Only host allowed to disallow syscalls from containers
+  for(int j = 0; j < 100; j++){
+    if(container.notAllowed[containerID][j] == 0){
+      container.notAllowed[containerID][j] = sysID;
+      return 0;
+    }
+  }
+}
+
+int 
+sys_debar_container(int containerID, int sysID)
+{
+  argint(0, &containerID);
+  argint(1, &sysID);
+  if(myproc()->containerID != -1)
+    return -2; // Only host allowed to allow syscalls from containers
+  for(int j = 0; j < 100; j++){
+    if(container.notAllowed[containerID][j] == sysID){
+      container.notAllowed[containerID][j] = 0;
+      return 0;
+    }
+  }
 }

@@ -7,6 +7,7 @@
 #include "x86.h"
 #include "syscall.h"
 #include "syscall_trace.h"
+#include "syscall_container.h"
 
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
@@ -127,6 +128,8 @@ extern int sys_destroy_container(void);
 extern int sys_join_container(void);
 extern int sys_leave_container(void);
 extern int sys_proc_stat_container(void);
+extern int sys_scheduler_log_on(void);
+extern int sys_scheduler_log_off(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -173,6 +176,8 @@ static int (*syscalls[])(void) = {
 [SYS_join_container] sys_join_container,
 [SYS_leave_container]  sys_leave_container,
 [SYS_proc_stat_container] sys_proc_stat_container,
+[SYS_scheduler_log_on] sys_scheduler_log_on,
+[SYS_scheduler_log_off] sys_scheduler_log_off,
 };
 
 // MOD-1 : Definitions of external variables here
@@ -220,6 +225,8 @@ char* syscallnames[] = {
     "sys_join_container",
     "sys_leave_container",
     "sys_proc_stat_container",
+    "sys_scheduler_log_on",
+    "sys_scheduler_log_off"
 };
 
 int num_sys_calls = NELEM(syscallnames);
@@ -240,7 +247,13 @@ syscall(void)
     }
     // MOD-1 : Print syscall
     // cprintf("DEBUG : %s %d\n", syscallnames[num-1], syscallcounts[num-1]);
-
+    
+    // MOD-3 : Syscall check if allowed from this container
+    for(int j = 0; j < 100; j++){
+      if(container.notAllowed[curproc->containerID][j] == num)
+        return -2; // syscall not allowed from this container
+    }
+    
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",

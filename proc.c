@@ -360,10 +360,13 @@ scheduler(void)
         continue;
       
       p->v_state = V_RUNNING; // MOD-3 : Make this process virtually running
+      // MOD-3 : Print schedule if log on
+      if(container.containerIDs[p->containerID] == 2)
+        cprintf("Container:%d\tScheduling process:%d\n", p->containerID, p->pid);
       for(int j = 0; j < NPROC; j++){
         // Other process which was v_running in this container to shift to v_runnable
         for(p1 = ptable.proc; p1 < &ptable.proc[NPROC]; p1++){
-          if(p1->containerID == p->containerID && p1->v_state == V_RUNNING)
+          if(p1->containerID != -1 && p1->containerID == p->containerID && p1->v_state == V_RUNNING)
             p1->v_state = V_RUNNABLE;
         }
       }

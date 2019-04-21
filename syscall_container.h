@@ -9,6 +9,7 @@ typedef struct{
   int containerIDs[NPROC];
   int numActive;
   int procIDs[NPROC][NPROC];
+  int notAllowed[NPROC][100];
 } containerStruct;
 
 extern containerStruct container;

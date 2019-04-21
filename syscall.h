@@ -43,3 +43,5 @@
 #define SYS_join_container      39
 #define SYS_leave_container     40
 #define SYS_proc_stat_container 41
+#define SYS_scheduler_log_on    42
+#define SYS_scheduler_log_off   43
