@@ -43,7 +43,8 @@ kernel_buffers kern = {
 containerStruct container = {
   .containerIDs = { 0 },
   .numActive = 0,
-  .procIDs = { 0 }
+  .procIDs = {{ 0 }},
+  .notAllowed = {{ 0 }}
 };
 
 void enque(int pid, int index)
@@ -514,9 +515,10 @@ sys_bar_container(int containerID, int sysID)
   for(int j = 0; j < 100; j++){
     if(container.notAllowed[containerID][j] == 0){
       container.notAllowed[containerID][j] = sysID;
-      return 0;
+      break;
     }
   }
+  return 0;
 }
 
 int 
@@ -529,7 +531,8 @@ sys_debar_container(int containerID, int sysID)
   for(int j = 0; j < 100; j++){
     if(container.notAllowed[containerID][j] == sysID){
       container.notAllowed[containerID][j] = 0;
-      return 0;
+      break;
     }
   }
+  return 0;
 }

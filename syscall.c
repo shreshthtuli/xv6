@@ -251,7 +251,8 @@ syscall(void)
     // MOD-3 : Syscall check if allowed from this container
     for(int j = 0; j < 100; j++){
       if(container.notAllowed[curproc->containerID][j] == num)
-        return -2; // syscall not allowed from this container
+        cprintf("Syscall %d not allowed in container with ID %d\n",
+            num, curproc->containerID);; // syscall not allowed from this container
     }
     
     curproc->tf->eax = syscalls[num]();
