@@ -168,7 +168,6 @@ container_cat(char* filename)
     name[i+6] = filename[i];
   if(container == -1){
     fd = open(filename, 0);
-    printf(1, "host file %s, %d\n", filename, fd);
   }
   else{
       fd = open(name, 0);

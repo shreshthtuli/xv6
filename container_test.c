@@ -67,23 +67,39 @@ int main(int argc, char *argv[])
 		printf(1, "Child proc %d, num %d memory log on\n", getpid(), num);
 		memory_log_on();
 		char* a = (char*)container_malloc(sizeof(char)*10);
-		a = (char*)container_malloc(sizeof(char)*15);
-		a = (char*)container_malloc(sizeof(char)*35);
-		a[5] = 'c';
+		char* b = (char*)container_malloc(sizeof(char)*14);
+		char* c = (char*)container_malloc(sizeof(char)*8);
 		memory_log_off();
 
 		barrier();
 
 		/* ---------- FILE SYSTEM TEST ---------- */
-		container_ls();
-		container_create("file_"+getpid());
-		barrier();
-		container_ls();
-		int fd = container_create("my_file");
-		container_write(fd, "Modified by: "+getpid());
-		container_close(fd);
-		container_cat("my_file"); 
-
+		if(num >= 3){
+			container_ls();
+			a = "file_0";
+			a[5] = getpid() + '0';
+			int fd = container_create(a);
+			container_write(fd, "hello_world!\n");
+			container_close(fd);
+			barrier();
+			printf(1, "Child proc %d, num %d creating %s\n", getpid(), num, a);
+			container_ls();
+			c = "my_file";
+			fd = container_create(c);
+			b = "Modified by: ";
+			b[12] = getpid() + '0'; b[13] = '\n';
+			container_write(fd, b);
+			container_close(fd);
+			container_cat(c); 
+			printf(1, "Child proc %d, num %d creating my_file\n", getpid(), num);
+			container_ls();
+		}
+		else{
+			a = "file_";
+			a[5] = getpid() + '0'; a[6] = '\0';
+			container_create(a); c = "my_file\0";
+			barrier();
+		}
 
 		printf(1, "Exiting child %d, num %d\n", getpid(), num);
 		leave_container();
