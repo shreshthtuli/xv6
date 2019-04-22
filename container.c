@@ -147,7 +147,7 @@ container_ls()
   name[4] = (container%10)+'0';
   ls(".");
   // printf(1, "ls done now doing ls in %s\n", name);
-  if(cid() != -1)
+  if(cid() != -1) // ls files in my container as well
     ls_cnt(name); 
 }
 
@@ -166,12 +166,12 @@ container_cat(char* filename)
   name[5] = '/';
   for(int i = 0; i < strlen(filename); i++)
     name[i+6] = filename[i];
-  if(container == -1){
+  if(container == -1){ // If host open host file
     fd = open(filename, 0);
   }
-  else{
+  else{ // If container first try to open in container
       fd = open(name, 0);
-      if(fd < 0){
+      if(fd < 0){ // If not present, open host file
         fd = open(filename, 0);
       }
   }
@@ -191,7 +191,7 @@ container_create(char* filename)
   name[0] = 'c'; name[1] = 'n'; name[2] = 't';
   name[3] = (container/10)+'0';
   name[4] = (container%10)+'0';
-  if(open(name, 0) < 0)
+  if(open(name, 0) < 0) // If my directory not present, make one
     mkdir(name);
   name[5] = '/';
   for(int i = 0; i < strlen(filename); i++)
@@ -202,7 +202,7 @@ container_create(char* filename)
 // MOD-3 : When opening file first check if it exists in
 // my container otherwise copy it from host
 int
-container_open(char*filename)
+container_open(char*filename, int mode)
 {
   int container = cid(); 
   if(container == -1)
@@ -218,12 +218,15 @@ container_open(char*filename)
   for(int i = 0; i < strlen(filename); i++)
     name[i+6] = filename[i];
   int fd = open(name, O_RDWR);
-  if(fd < 0){ // Copy file from host
+  if(fd < 0 && mode & O_RDWR){ // Not in container and write -> copy to my container
     fd = open(name, O_CREATE|O_RDWR);
     int fd_host = open(filename, O_RDONLY);
     while((n = read(fd_host, buf, sizeof(buf))) > 0){
       write(fd, buf, n);
     }
+  }
+  if(fd < 0 && mode & O_RDONLY){ // Not in container but read only so don't copy
+      fd = open(filename, O_RDONLY);
   }
   else{ // Seek to end
     while((n = read(fd, buf, sizeof(buf))) > 0){}

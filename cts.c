@@ -38,12 +38,12 @@ int main(int argc, char *argv[])
     container_cat("file");
     sleep(100);
     printf(1, "\n");
-    fd = container_open("file");
+    fd = container_open("file", O_RDWR);
     container_write(fd, "Modifiedagain");
     container_close(fd);
     container_cat("file");
     printf(1, "\n");
-    fd = container_open("filehost");
+    fd = container_open("filehost", O_RDWR);
     container_write(fd, "ModifiedHostfile\n");
     container_close(fd);
     container_cat("filehost");
