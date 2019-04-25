@@ -192,8 +192,8 @@ UPROGS=\
 	_cts\
 	_container_test\
 
-fs.img: mkfs README arr assig2a.inp assig2b.inp $(UPROGS)
-	./mkfs fs.img README arr assig2a.inp assig2b.inp $(UPROGS)
+fs.img: mkfs README arr $(UPROGS)
+	./mkfs fs.img README arr $(UPROGS)
 
 -include *.d
 
